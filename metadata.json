@@ -1,0 +1,7 @@
+{
+  "name": "Cyber Guardian: Campus Duty",
+  "description": "A dynamic text-based game where you act as a university IT help desk volunteer, approving or denying student requests to prevent cybersecurity threats and scams using Gemini.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
