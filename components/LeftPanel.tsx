@@ -91,14 +91,14 @@ const ChatWindow: React.FC<{ scenario: Scenario | null, chatHistory: ChatMessage
         <div className="flex-grow bg-black border-2 border-green-500 rounded-none p-4 space-y-4 overflow-y-auto shadow-[inset_0_0_20px_rgba(34,197,94,0.1)]">
             {chatHistory.map((msg, index) => (
                 <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`${msg.sender === 'user' ? 'bg-green-700 border-green-500' : 'bg-blue-700 border-blue-500'} text-white p-3 rounded-none max-w-lg shadow-[0_0_15px_rgba(0,0,0,0.5)] border font-mono`}>
+                    <div className={`${msg.sender === 'user' ? 'bg-green-700 border-green-500' : 'bg-black-700 border-green-500'} text-green-600 p-3 rounded-none max-w-lg shadow-[0_0_15px_rgba(0,0,0,0.5)] border font-mono`}>
                         {index === 0 && scenario ? <InitialMessage scenario={scenario} /> : <p>{msg.text}</p>}
                     </div>
                 </div>
             ))}
             {isCustomerTyping && (
                 <div className="flex justify-start">
-                    <div className="bg-blue-700 border-blue-500 text-white p-3 rounded-none max-w-lg shadow-[0_0_15px_rgba(0,0,0,0.5)] border font-mono">
+                    <div className="bg-black-700 border-green-500 text-white-500 p-3 rounded-none max-w-lg shadow-[0_0_15px_rgba(0,0,0,0.5)] border font-mono">
                         <p className="animate-pulse">Typing...</p>
                     </div>
                 </div>
@@ -164,7 +164,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ scenario, isLoading, chatHistory,
                         onStartCall();
                     }} 
                     disabled={decisionMade}
-                    className="w-full bg-blue-700 hover:bg-blue-600 text-blue-100 font-bold py-2 px-4 rounded-none transition-all duration-300 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed text-lg font-mono border-2 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.5)] tracking-wider"
+                    className="w-full bg-black-700 hover:bg-green-600 text-green-300 font-bold py-2 px-4 rounded-none transition-all duration-300 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed text-lg font-mono border-2 border-green-500 tracking-wider"
                 >
                     INITIATE VOICE AUTHENTICATION
                 </button>
