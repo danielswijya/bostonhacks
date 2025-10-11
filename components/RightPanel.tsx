@@ -135,8 +135,22 @@ const StatusBar: React.FC<{bankCapital: number; maxBankCapital: number; isLeakin
     )
 }
 
-const ActionButtons: React.FC<{onDecision: (approved: boolean) => void; disabled: boolean}> = ({onDecision, disabled}) => (
+const ActionButtons: React.FC<{onDecision: (approved: boolean) => void; disabled: boolean; isLeaking: boolean; isLoading: boolean}> = ({onDecision, disabled, isLeaking, isLoading}) => (
     <div id="decision-buttons-onboarding" className="grid grid-cols-2 gap-4">
+        {isLeaking && (
+            <div className="col-span-2 mb-2 p-2 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg text-center">
+                <p className="text-red-600 dark:text-red-400 text-sm font-bold animate-pulse">
+                    🚨 CAPITAL LEAK DETECTED - Use IT Dispatch to restore system control
+                </p>
+            </div>
+        )}
+        {isLoading && (
+            <div className="col-span-2 mb-2 p-2 bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg text-center">
+                <p className="text-yellow-600 dark:text-yellow-400 text-sm font-bold">
+                    Loading next case...
+                </p>
+            </div>
+        )}
         <button 
             onClick={() => {
                 playSound('approve');
@@ -208,10 +222,8 @@ const RightPanel: React.FC<RightPanelProps> = ({
                 </svg>
                 {isLeaking ? 'DISPATCH IT SECURITY' : (isITDispatchOnCooldown ? `IT ON COOLDOWN (${itCooldownRemaining} case${itCooldownRemaining > 1 ? 's' : ''})` : 'IT SECURITY STANDING BY')}
             </button>
-        </div>
-
-      <div className="mt-auto pt-4 border-t border-gray-300 dark:border-gray-700">
-        <ActionButtons onDecision={onDecision} disabled={isLoading || isLeaking} />
+        </div>      <div className="mt-auto pt-4 border-t border-gray-300 dark:border-gray-700">
+        <ActionButtons onDecision={onDecision} disabled={isLoading || isLeaking} isLeaking={isLeaking} isLoading={isLoading} />
       </div>
     </div>
   );
