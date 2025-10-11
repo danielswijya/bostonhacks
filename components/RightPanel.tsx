@@ -129,7 +129,7 @@ const ActionButtons: React.FC<{onDecision: (approved: boolean) => void; disabled
             disabled={disabled}
             className="bg-red-700 hover:bg-red-600 text-red-100 font-bold py-4 px-4 rounded-none transition-all duration-300 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed text-2xl font-mono border-2 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)] hover:shadow-[0_0_30px_rgba(239,68,68,0.8)] tracking-wider"
         >
-            CLASSIFIED
+            DENY ACCESS
         </button>
     </div>
 );
