@@ -12,6 +12,10 @@ interface MarketTickerProps {
     day: number;
     casesToday: number;
     casesPerDay: number;
+    interestRate?: number;
+    economicCycle?: 'growth' | 'recession' | 'crisis';
+    lastEconomicEvent?: string;
+    onAdjustInterestRate?: (change: number) => void;
 }
 
 const ThemeToggle: React.FC<{ onClick: () => void; theme: Theme }> = ({ onClick, theme }) => (
@@ -71,7 +75,10 @@ const StockGraph: React.FC<{ history: number[], theme: Theme }> = ({ history, th
     );
 };
 
-const MarketTicker: React.FC<MarketTickerProps> = ({ capital, maxCapital, history, toggleTheme, theme, isLeaking, day, casesToday, casesPerDay }) => {
+const MarketTicker: React.FC<MarketTickerProps> = ({ 
+    capital, maxCapital, history, toggleTheme, theme, isLeaking, day, casesToday, casesPerDay,
+    interestRate = 5.0, economicCycle = 'growth', lastEconomicEvent = '', onAdjustInterestRate 
+}) => {
     const [tickerData, setTickerData] = useState(() => generateTickerData(20));
 
     useEffect(() => {
@@ -90,18 +97,23 @@ const MarketTicker: React.FC<MarketTickerProps> = ({ capital, maxCapital, histor
             );
         }, 2000);
         return () => clearInterval(interval);
-    }, []);
-
-    const capitalPercentage = (capital / maxCapital) * 100;
+    }, []);    const capitalPercentage = (capital / maxCapital) * 100;
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
-    };    return (
+    };
+    
+    const getEconomicCycleColor = () => {
+        switch(economicCycle) {
+            case 'growth': return 'text-green-400';
+            case 'recession': return 'text-yellow-400';
+            case 'crisis': return 'text-red-400';
+            default: return 'text-green-400';
+        }
+    };return (
         <header className="relative z-50 bg-black p-3 rounded-none shadow-2xl border-2 border-green-500 bg-opacity-100 shadow-green-500/20 mb-4">
             {/* First Row - Game Info and Controls */}
             <div className="flex justify-between items-center mb-2 px-2">
-                <h1 className="text-2xl font-display text-green-400 font-bold tracking-wider">AEGIS SENTINEL // FCU</h1>
-
-                 <div className="flex items-center space-x-6">
+                <h1 className="text-2xl font-display text-green-400 font-bold tracking-wider">AEGIS SENTINEL // FCU</h1>                 <div className="flex items-center space-x-6">
                     <div className="flex items-center space-x-4 text-sm">
                         <div className="text-center">
                             <p className="text-green-300 text-xs uppercase tracking-wide">DAY</p>
@@ -111,12 +123,39 @@ const MarketTicker: React.FC<MarketTickerProps> = ({ capital, maxCapital, histor
                             <p className="text-green-300 text-xs uppercase tracking-wide">CASE</p>
                             <p className="font-bold text-green-400 font-mono text-lg">{casesToday + 1}/{casesPerDay}</p>
                         </div>
+                        <div className="text-center">
+                            <p className="text-green-300 text-xs uppercase tracking-wide">ECONOMY</p>
+                            <p className={`font-bold font-mono text-lg uppercase ${getEconomicCycleColor()}`}>{economicCycle}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-green-300 text-xs uppercase tracking-wide">INTEREST RATE</p>
+                            <p className="font-bold text-green-400 font-mono text-lg">{interestRate.toFixed(1)}%</p>
+                        </div>
                     </div>
+                    
+                    {/* Interest Rate Controls */}
+                    {onAdjustInterestRate && (
+                        <div className="flex items-center space-x-2">
+                            <button 
+                                onClick={() => onAdjustInterestRate(-0.25)}
+                                className="px-2 py-1 bg-red-700 hover:bg-red-600 text-red-100 font-mono text-xs border border-red-500 rounded-none transition-colors"
+                                title="Decrease interest rate by 0.25%"
+                            >
+                                RATE -
+                            </button>
+                            <button 
+                                onClick={() => onAdjustInterestRate(0.25)}
+                                className="px-2 py-1 bg-green-700 hover:bg-green-600 text-green-100 font-mono text-xs border border-green-500 rounded-none transition-colors"
+                                title="Increase interest rate by 0.25%"
+                            >
+                                RATE +
+                            </button>
+                        </div>
+                    )}
                     
                     <ThemeToggle onClick={toggleTheme} theme={theme} />
                  </div>
-            </div>
-              {/* Second Row - Prominent Capital Display */}
+            </div>              {/* Second Row - Prominent Capital Display */}
             <div className="text-center mb-4">
                 <p className={`text-xs uppercase tracking-wide mb-1 font-bold ${isLeaking ? 'text-red-400 animate-pulse' : 'text-green-300'}`}>
                     STATE CAPITAL
@@ -127,6 +166,12 @@ const MarketTicker: React.FC<MarketTickerProps> = ({ capital, maxCapital, histor
                 <div className="w-40 mx-auto bg-gray-800 border border-green-500 rounded-full h-3 mt-3">
                     <div className={`${isLeaking ? 'bg-red-500 shadow-red-500/50' : 'bg-green-500 shadow-green-500/50'} h-3 rounded-full transition-all duration-500 shadow-lg`} style={{ width: `${capitalPercentage}%` }}></div>
                 </div>
+                {/* Economic Event Display */}
+                {lastEconomicEvent && (
+                    <div className="mt-2 p-2 bg-black/50 border border-green-600 rounded-none">
+                        <p className="text-green-300 text-xs font-mono">{lastEconomicEvent}</p>
+                    </div>
+                )}
             </div>
 
             <div className="w-full bg-black border-2 border-green-500 text-green-400 overflow-hidden whitespace-nowrap text-sm font-mono shadow-inner">
