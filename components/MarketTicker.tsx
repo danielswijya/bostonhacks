@@ -159,13 +159,9 @@ const MarketTicker: React.FC<MarketTickerProps> = ({
             <div className="text-center mb-4">
                 <p className={`text-xs uppercase tracking-wide mb-1 font-bold ${isLeaking ? 'text-red-400 animate-pulse' : 'text-green-300'}`}>
                     STATE CAPITAL
-                </p>
-                <p className={`text-6xl font-bold font-mono ${isLeaking ? 'text-red-400 animate-pulse shadow-red-500/50' : 'text-green-400 shadow-green-500/50'} drop-shadow-lg`}>
+                </p>                <p className={`text-6xl font-bold font-mono ${isLeaking ? 'text-red-400 animate-pulse shadow-red-500/50' : 'text-green-400 shadow-green-500/50'} drop-shadow-lg`}>
                     {formatCurrency(capital)}
                 </p>
-                <div className="w-40 mx-auto bg-gray-800 border border-green-500 rounded-full h-3 mt-3">
-                    <div className={`${isLeaking ? 'bg-red-500 shadow-red-500/50' : 'bg-green-500 shadow-green-500/50'} h-3 rounded-full transition-all duration-500 shadow-lg`} style={{ width: `${capitalPercentage}%` }}></div>
-                </div>
                 {/* Economic Event Display */}
                 {lastEconomicEvent && (
                     <div className="mt-2 p-2 bg-black/50 border border-green-600 rounded-none">
