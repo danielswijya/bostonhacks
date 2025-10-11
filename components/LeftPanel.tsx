@@ -14,16 +14,16 @@ interface LeftPanelProps {
 
 const CaseDetails: React.FC<{ scenario: Scenario }> = ({ scenario }) => {
     return (
-        <div className="mb-4 p-3 bg-gray-200 dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700">
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2">Transaction Details</h3>
+        <div className="mb-4 p-3 bg-black border-2 border-green-500 rounded-none shadow-[0_0_20px_rgba(34,197,94,0.3)]">
+            <h3 className="font-bold text-green-400 mb-2 font-mono text-lg tracking-wide">TRANSACTION DETAILS</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
-                    <p className="text-gray-500 dark:text-gray-400">Transaction Type</p>
-                    <p className="text-gray-800 dark:text-gray-200">{scenario.transactionType}</p>
+                    <p className="text-green-600 font-mono">Transaction Type</p>
+                    <p className="text-green-300 font-mono">{scenario.transactionType}</p>
                 </div>
                 <div>
-                    <p className="text-gray-500 dark:text-gray-400">Details</p>
-                    <p className="text-gray-800 dark:text-gray-200">{scenario.details}</p>
+                    <p className="text-green-600 font-mono">Details</p>
+                    <p className="text-green-300 font-mono">{scenario.details}</p>
                 </div>
             </div>
         </div>
@@ -33,22 +33,22 @@ const CaseDetails: React.FC<{ scenario: Scenario }> = ({ scenario }) => {
 
 const LoadingSpinner: React.FC = () => (
   <div className="flex justify-center items-center h-full">
-    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-500 dark:border-green-400"></div>
+    <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-green-400 shadow-[0_0_20px_rgba(34,197,94,0.5)]"></div>
   </div>
 );
 
 const CustomerProfile: React.FC<{ name: string, image: string }> = ({ name, image }) => (
-    <div className="flex items-center space-x-4 mb-4 p-3 bg-gray-200 dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700">
-        <div className="w-24 h-24 bg-gray-300 dark:bg-gray-700 rounded-md overflow-hidden flex-shrink-0 flex items-center justify-center animate-jump">
+    <div className="flex items-center space-x-4 mb-4 p-3 bg-black border-2 border-green-500 rounded-none shadow-[0_0_20px_rgba(34,197,94,0.3)]">
+        <div className="w-24 h-24 bg-black border border-green-600 rounded-none overflow-hidden flex-shrink-0 flex items-center justify-center animate-jump shadow-[0_0_15px_rgba(34,197,94,0.4)]">
             {image ? (
-                <img src={`data:image/png;base64,${image}`} alt="Customer" className="w-full h-full object-contain" style={{imageRendering: 'pixelated'}}/>
+                <img src={`data:image/png;base64,${image}`} alt="Customer" className="w-full h-full object-contain filter brightness-110 contrast-125" style={{imageRendering: 'pixelated'}}/>
             ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">No Image</div>
+                <div className="w-full h-full flex items-center justify-center text-green-600 text-xs font-mono">NO IMAGE</div>
             )}
         </div>
         <div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Client</p>
-            <p className="font-bold text-gray-900 dark:text-white text-lg">{name}</p>
+            <p className="text-green-600 text-sm font-mono">CLIENT</p>
+            <p className="font-bold text-green-300 text-lg font-mono tracking-wide">{name}</p>
         </div>
     </div>
 );
@@ -65,17 +65,15 @@ const InitialMessage: React.FC<{ scenario: Scenario }> = ({ scenario }) => {
         <div>
             <p className={`transition-opacity duration-500 ${isTranslated ? 'opacity-50' : 'opacity-100'}`}>
                 {scenario.initialMessage}
-            </p>
-            {!isTranslated && (
+            </p>            {!isTranslated && (
                 <button 
                     onClick={() => setIsTranslated(true)}
-                    className="text-xs bg-gray-600 hover:bg-gray-500 text-white py-1 px-2 rounded-md mt-2"
+                    className="text-xs bg-green-700 hover:bg-green-600 text-green-100 py-1 px-2 rounded-none mt-2 font-mono border border-green-500"
                 >
-                    Translate
+                    TRANSLATE
                 </button>
-            )}
-            {isTranslated && (
-                <p className="mt-2 pt-2 border-t border-blue-500 animate-fade-in">
+            )}            {isTranslated && (
+                <p className="mt-2 pt-2 border-t border-green-500 animate-fade-in text-green-300 font-mono">
                     {scenario.initialMessageEnglish}
                 </p>
             )}
@@ -89,20 +87,18 @@ const ChatWindow: React.FC<{ scenario: Scenario | null, chatHistory: ChatMessage
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [chatHistory, isCustomerTyping]);
-
-    return (
-        <div className="flex-grow bg-gray-200 dark:bg-gray-900 rounded-lg p-4 space-y-4 overflow-y-auto border border-gray-300 dark:border-gray-700">
+    }, [chatHistory, isCustomerTyping]);    return (
+        <div className="flex-grow bg-black border-2 border-green-500 rounded-none p-4 space-y-4 overflow-y-auto shadow-[inset_0_0_20px_rgba(34,197,94,0.1)]">
             {chatHistory.map((msg, index) => (
                 <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`${msg.sender === 'user' ? 'bg-green-600' : 'bg-blue-600'} text-white p-3 rounded-lg max-w-lg shadow-md`}>
+                    <div className={`${msg.sender === 'user' ? 'bg-green-700 border-green-500' : 'bg-blue-700 border-blue-500'} text-white p-3 rounded-none max-w-lg shadow-[0_0_15px_rgba(0,0,0,0.5)] border font-mono`}>
                         {index === 0 && scenario ? <InitialMessage scenario={scenario} /> : <p>{msg.text}</p>}
                     </div>
                 </div>
             ))}
             {isCustomerTyping && (
                 <div className="flex justify-start">
-                    <div className="bg-blue-600 text-white p-3 rounded-lg max-w-lg shadow-md">
+                    <div className="bg-blue-700 border-blue-500 text-white p-3 rounded-none max-w-lg shadow-[0_0_15px_rgba(0,0,0,0.5)] border font-mono">
                         <p className="animate-pulse">Typing...</p>
                     </div>
                 </div>
@@ -127,11 +123,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled, suggeste
         setInput('');
     };
 
-    return (
-        <div className="mt-4">
+    return (        <div className="mt-4">
              <div className="flex gap-2 mb-2 flex-wrap">
                 {suggestedPrompts.map(prompt => (
-                    <button key={prompt} onClick={() => onSendMessage(prompt)} disabled={disabled} className="text-xs bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-300 py-1 px-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button key={prompt} onClick={() => onSendMessage(prompt)} disabled={disabled} className="text-xs bg-black border border-green-600 hover:bg-green-900/30 hover:border-green-400 text-green-400 py-1 px-2 rounded-none disabled:opacity-50 disabled:cursor-not-allowed font-mono transition-all">
                         {prompt}
                     </button>
                 ))}
@@ -143,11 +138,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled, suggeste
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Type your message..."
                     disabled={disabled}
-                    className="flex-grow bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-400 dark:disabled:bg-gray-600"
+                    className="flex-grow bg-black border border-green-500 text-green-400 font-mono rounded-none p-2 focus:outline-none focus:ring-1 focus:ring-green-400 focus:shadow-[0_0_10px_rgba(34,197,94,0.5)] disabled:bg-gray-900 disabled:border-gray-700 placeholder-green-700"
                     aria-label="Chat input"
                 />
-                <button type="submit" disabled={disabled} className="bg-green-600 hover:bg-green-700 text-white font-bold p-2 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed">
-                    Send
+                <button type="submit" disabled={disabled} className="bg-green-700 hover:bg-green-600 text-green-100 font-bold p-2 rounded-none disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed font-mono border border-green-500">
+                    SEND
                 </button>
             </form>
         </div>
@@ -157,22 +152,21 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled, suggeste
 
 const LeftPanel: React.FC<LeftPanelProps> = ({ scenario, isLoading, chatHistory, isCustomerTyping, onSendMessage, onStartCall, decisionMade }) => {
   return (
-    <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-lg h-full min-h-[700px] flex flex-col border border-gray-200 dark:border-gray-700">
-      <h2 className="text-3xl font-display text-green-600 dark:text-green-400 border-b-2 border-gray-300 dark:border-gray-700 pb-2 mb-4">Transaction Request</h2>
+    <div className="bg-black p-6 rounded-none shadow-[0_0_30px_rgba(34,197,94,0.3)] h-full min-h-[700px] flex flex-col border-2 border-green-500">
+      <h2 className="text-3xl font-mono text-green-400 border-b-2 border-green-500 pb-2 mb-4 text-center tracking-wider">INCOMING TRANSMISSION</h2>
       {isLoading ? <LoadingSpinner /> : scenario && (
         <div className="flex flex-col flex-grow animate-fade-in h-full">
             <CustomerProfile name={scenario.customerName} image={scenario.customerImage} />
             <CaseDetails scenario={scenario} />
-            <div className="mb-4">
-                <button 
+            <div className="mb-4">                <button 
                     onClick={() => {
                         playSound('startCall');
                         onStartCall();
                     }} 
                     disabled={decisionMade}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed text-lg font-display"
+                    className="w-full bg-blue-700 hover:bg-blue-600 text-blue-100 font-bold py-2 px-4 rounded-none transition-all duration-300 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed text-lg font-mono border-2 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.5)] tracking-wider"
                 >
-                    Voice Signature Verification
+                    INITIATE VOICE AUTHENTICATION
                 </button>
             </div>
             <div className="flex flex-col flex-grow min-h-0">

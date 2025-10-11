@@ -26,9 +26,8 @@ function App() {
   const toggleTheme = () => {
     setTheme(prevTheme => prevTheme === 'dark' ? 'light' : 'dark');
   };
-
   return (
-    <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen antialiased transition-colors duration-300">
+    <div className="bg-black text-green-400 min-h-screen antialiased font-mono">
       <main className="container mx-auto p-4 md:p-8">
         <GameScreen toggleTheme={toggleTheme} theme={theme} />
       </main>

@@ -224,18 +224,17 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
   if (showOnboarding) {
     return <OnboardingModal onClose={() => setShowOnboarding(false)} />;
   }
-
   if (bankCapital <= 0) {
     return (
-        <div className="text-center p-8 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-2xl animate-fade-in border border-red-500 dark:border-red-700">
-            <h2 className="text-6xl font-display text-red-600 dark:text-red-500 mb-4">BANK CAPITAL DEPLETED</h2>
-            <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">A catastrophic capital breach has led to total asset loss and market collapse. Your position has been terminated.</p>
-            <p className="mb-4 text-gray-600 dark:text-gray-400">Total Days Survived: {currentDay - 1}</p>
+        <div className="text-center p-8 bg-black rounded-none shadow-[0_0_50px_rgba(239,68,68,0.8)] animate-fade-in border-2 border-red-500">
+            <h2 className="text-6xl font-mono text-red-400 mb-4 tracking-wider animate-pulse">BANK CAPITAL DEPLETED</h2>
+            <p className="text-xl mb-6 text-green-400 font-mono">A catastrophic capital breach has led to total asset loss and market collapse. Your position has been terminated.</p>
+            <p className="mb-4 text-green-600 font-mono">Total Days Survived: {currentDay - 1}</p>
             <button
                 onClick={resetGame}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300"
+                className="bg-green-700 hover:bg-green-600 text-green-100 font-bold py-3 px-6 rounded-none transition-all duration-300 font-mono border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.5)]"
             >
-                Initiate New Simulation
+                INITIATE NEW SIMULATION
             </button>
         </div>
     );
@@ -244,11 +243,20 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
   if (showEndOfDay) {
     return <EndOfDayModal day={currentDay} stats={dayStats} onNextDay={handleStartNextDay} resolvedCases={resolvedCases} />;
   }
-
   return (
     <>
-      <MarketTicker capital={bankCapital} history={capitalHistory} toggleTheme={toggleTheme} theme={theme}/>
-      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 transition-shadow duration-500 rounded-lg ${isLeaking ? 'shadow-2xl shadow-red-500/20 dark:shadow-red-500/50' : ''}`}>
+      <MarketTicker 
+        capital={bankCapital} 
+        maxCapital={MAX_BANK_CAPITAL}
+        history={capitalHistory} 
+        toggleTheme={toggleTheme} 
+        theme={theme}
+        isLeaking={isLeaking}
+        day={currentDay}
+        casesToday={casesToday}
+        casesPerDay={CASES_PER_DAY}
+      />
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 transition-shadow duration-500 rounded-none ${isLeaking ? 'shadow-[0_0_50px_rgba(239,68,68,0.8)]' : ''}`}>
         <div id="left-panel-onboarding" className="lg:col-span-1">
           <LeftPanel 
             scenario={currentScenario} 
@@ -259,18 +267,13 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
             onStartCall={() => setIsCallActive(true)}
             decisionMade={isLoading}
           />
-        </div>
-        <div id="right-panel-onboarding" className="lg:col-span-1">
+        </div>        <div id="right-panel-onboarding" className="lg:col-span-1">
           <RightPanel 
               onDecision={handleDecision}
               isLoading={isLoading}
               clients={visibleClients}
-              bankCapital={bankCapital}
-              maxBankCapital={MAX_BANK_CAPITAL}
               isLeaking={isLeaking}
-              day={currentDay}
               casesToday={casesToday}
-              casesPerDay={CASES_PER_DAY}
               onDispatchIT={handleDispatchIT}
               itDispatchCooldownCases={itDispatchCooldown}
           />

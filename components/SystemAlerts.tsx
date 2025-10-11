@@ -14,22 +14,20 @@ const Alert: React.FC<{ alert: SystemAlert; onDismiss: (id: number) => void }> =
 
     return () => clearTimeout(timer);
   }, [alert.id, onDismiss]);
-
   const getAlertStyles = () => {
     switch (alert.type) {
       case 'error':
-        return 'bg-red-500 border-red-700';
+        return 'bg-red-900/80 border-red-500 text-red-300 shadow-[0_0_20px_rgba(239,68,68,0.6)]';
       case 'success':
-        return 'bg-green-500 border-green-700';
+        return 'bg-green-900/80 border-green-500 text-green-300 shadow-[0_0_20px_rgba(34,197,94,0.6)]';
       case 'info':
       default:
-        return 'bg-blue-500 border-blue-700';
+        return 'bg-blue-900/80 border-blue-500 text-blue-300 shadow-[0_0_20px_rgba(59,130,246,0.6)]';
     }
   };
-
   return (
     <div 
-      className={`relative w-80 p-4 mb-4 text-white rounded-lg shadow-lg border-l-4 animate-slide-in-bottom ${getAlertStyles()}`}
+      className={`relative w-80 p-4 mb-4 rounded-none border-l-4 animate-slide-in-bottom font-mono ${getAlertStyles()}`}
       role="alert"
     >
       <div className="flex items-center">
@@ -39,11 +37,11 @@ const Alert: React.FC<{ alert: SystemAlert; onDismiss: (id: number) => void }> =
           </svg>
         </div>
         <div>
-          <p className="font-bold">SYSTEM ALERT</p>
-          <p className="text-sm">{alert.message}</p>
+          <p className="font-bold tracking-wider">SYSTEM ALERT</p>
+          <p className="text-sm font-mono">{alert.message}</p>
         </div>
       </div>
-       <button onClick={() => onDismiss(alert.id)} className="absolute top-0 bottom-0 right-0 px-4 py-3" aria-label="Dismiss alert">
+       <button onClick={() => onDismiss(alert.id)} className="absolute top-0 bottom-0 right-0 px-4 py-3 hover:bg-white/10" aria-label="Dismiss alert">
             <svg className="fill-current h-6 w-6" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
         </button>
     </div>

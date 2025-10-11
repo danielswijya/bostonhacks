@@ -4,15 +4,20 @@ type Theme = 'light' | 'dark';
 
 interface MarketTickerProps {
     capital: number;
+    maxCapital: number;
     history: number[];
     toggleTheme: () => void;
     theme: Theme;
+    isLeaking: boolean;
+    day: number;
+    casesToday: number;
+    casesPerDay: number;
 }
 
 const ThemeToggle: React.FC<{ onClick: () => void; theme: Theme }> = ({ onClick, theme }) => (
     <button
         onClick={onClick}
-        className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-700 focus:outline-none"
+        className="p-2 rounded border border-green-500 text-green-400 hover:bg-green-500 hover:text-black focus:outline-none transition-colors duration-300"
         aria-label="Toggle theme"
     >
         {theme === 'dark' ? (
@@ -66,7 +71,7 @@ const StockGraph: React.FC<{ history: number[], theme: Theme }> = ({ history, th
     );
 };
 
-const MarketTicker: React.FC<MarketTickerProps> = ({ capital, history, toggleTheme, theme }) => {
+const MarketTicker: React.FC<MarketTickerProps> = ({ capital, maxCapital, history, toggleTheme, theme, isLeaking, day, casesToday, casesPerDay }) => {
     const [tickerData, setTickerData] = useState(() => generateTickerData(20));
 
     useEffect(() => {
@@ -87,25 +92,49 @@ const MarketTicker: React.FC<MarketTickerProps> = ({ capital, history, toggleThe
         return () => clearInterval(interval);
     }, []);
 
-    const isPositive = parseFloat(tickerData[0].change) >= 0;
-
-    return (
-        <header className="bg-gray-100 dark:bg-gray-800 p-2 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+    const capitalPercentage = (capital / maxCapital) * 100;
+    const formatCurrency = (value: number) => {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
+    };    return (
+        <header className="sticky top-0 z-50 bg-black p-3 rounded-lg shadow-2xl border-2 border-green-500 backdrop-blur-sm bg-opacity-95 shadow-green-500/20">
+            {/* First Row - Game Info and Controls */}
             <div className="flex justify-between items-center mb-2 px-2">
-                 <h1 className="text-2xl font-display text-green-600 dark:text-green-400">Aegis Sentinel // FCU</h1>
-                 <div className="flex items-center space-x-4">
-                    <div className="w-48 h-10">
-                         <StockGraph history={history} theme={theme} />
+                <h1 className="text-2xl font-display text-green-400 font-bold tracking-wider">AEGIS SENTINEL // FCU</h1>
+
+                 <div className="flex items-center space-x-6">
+                    <div className="flex items-center space-x-4 text-sm">
+                        <div className="text-center">
+                            <p className="text-green-300 text-xs uppercase tracking-wide">DAY</p>
+                            <p className="font-bold text-green-400 font-mono text-lg">{day}</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-green-300 text-xs uppercase tracking-wide">CASE</p>
+                            <p className="font-bold text-green-400 font-mono text-lg">{casesToday + 1}/{casesPerDay}</p>
+                        </div>
                     </div>
+                    
                     <ThemeToggle onClick={toggleTheme} theme={theme} />
                  </div>
             </div>
-            <div className="w-full bg-black text-white overflow-hidden whitespace-nowrap text-sm font-mono">
+              {/* Second Row - Prominent Capital Display */}
+            <div className="text-center mb-4">
+                <p className={`text-xs uppercase tracking-wide mb-1 font-bold ${isLeaking ? 'text-red-400 animate-pulse' : 'text-green-300'}`}>
+                    STATE CAPITAL
+                </p>
+                <p className={`text-6xl font-bold font-mono ${isLeaking ? 'text-red-400 animate-pulse shadow-red-500/50' : 'text-green-400 shadow-green-500/50'} drop-shadow-lg`}>
+                    {formatCurrency(capital)}
+                </p>
+                <div className="w-40 mx-auto bg-gray-800 border border-green-500 rounded-full h-3 mt-3">
+                    <div className={`${isLeaking ? 'bg-red-500 shadow-red-500/50' : 'bg-green-500 shadow-green-500/50'} h-3 rounded-full transition-all duration-500 shadow-lg`} style={{ width: `${capitalPercentage}%` }}></div>
+                </div>
+            </div>
+
+            <div className="w-full bg-black border-2 border-green-500 text-green-400 overflow-hidden whitespace-nowrap text-sm font-mono shadow-inner">
                 <div className="inline-block animate-[ticker_40s_linear_infinite]">
                     {tickerData.map(item => (
-                        <span key={item.id} className="inline-block px-4 py-1 border-r border-gray-600">
+                        <span key={item.id} className="inline-block px-4 py-1 border-r border-green-600">
                             {item.symbol}{' '}
-                            <span className={parseFloat(item.change) >= 0 ? 'text-green-400' : 'text-red-400'}>
+                            <span className={parseFloat(item.change) >= 0 ? 'text-green-300' : 'text-red-400'}>
                                 {item.price}
                                 {parseFloat(item.change) >= 0 ? ' ▲' : ' ▼'}
                                 {item.change}
@@ -113,9 +142,9 @@ const MarketTicker: React.FC<MarketTickerProps> = ({ capital, history, toggleThe
                         </span>
                     ))}
                      {tickerData.map(item => (
-                        <span key={`${item.id}-clone`} className="inline-block px-4 py-1 border-r border-gray-600">
+                        <span key={`${item.id}-clone`} className="inline-block px-4 py-1 border-r border-green-600">
                             {item.symbol}{' '}
-                            <span className={parseFloat(item.change) >= 0 ? 'text-green-400' : 'text-red-400'}>
+                            <span className={parseFloat(item.change) >= 0 ? 'text-green-300' : 'text-red-400'}>
                                 {item.price}
                                 {parseFloat(item.change) >= 0 ? ' ▲' : ' ▼'}
                                 {item.change}

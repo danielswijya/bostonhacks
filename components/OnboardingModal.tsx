@@ -12,27 +12,27 @@ interface Step {
 
 const steps: Step[] = [
   {
-    title: "Welcome to the Financial Crimes Unit",
-    content: "You are a Transaction Analyst at Aegis Global Bank. Your primary duty is to protect the bank's liquid capital from a global network of cybercriminals. The market is watching.",
+    title: "CLASSIFIED: OPERATION AEGIS",
+    content: "You are Agent designation: FINANCIAL ANALYST, Aegis Global Bank Counter-Intelligence Division. Your mission: Identify and neutralize enemy financial infiltration attempts. The Cold War has moved to the banking sector.",
   },
   {
-    title: "The Transaction Request",
-    content: "On the left is the client's request. You can chat with them, view their profile, and initiate a 'Voice Signature Verification' call to gather intelligence.",
+    title: "SUBJECT INTERROGATION TERMINAL",
+    content: "Left terminal displays incoming transmission requests from potential hostile agents. Utilize secure chat protocols and initiate 'Voice Authentication' to extract intelligence and verify subject identity.",
     highlightId: 'left-panel-onboarding',
   },
   {
-    title: "The Analysis Terminal",
-    content: "On the right is your terminal. Use the 'Client Ledger' and 'Compliance Protocols' to cross-reference every detail. A single mistake can trigger a crisis.",
+    title: "SURVEILLANCE DATABASE ACCESS",
+    content: "Right terminal provides access to classified intelligence networks. Cross-reference 'Subject Dossiers' and 'Security Protocols' to identify enemy operatives. One security breach could compromise national assets.",
     highlightId: 'tabs-onboarding',
   },
   {
-    title: "Capital Leaks & IT Dispatch",
-    content: "If you approve a fraudulent transaction, it will trigger a real-time Capital Leak. Use the 'Dispatch IT Security' button to stop the leak, but be warned: the team has a cooldown period after each deployment.",
+    title: "CAPITAL BREACH PROTOCOL",
+    content: "Approving hostile transactions triggers immediate capital hemorrhaging. Deploy 'Emergency Security Response' to contain breaches, but field teams require operational cooldown between deployments.",
     highlightId: 'it-dispatch-onboarding',
   },
   {
-    title: "Authorize or Deny",
-    content: "Once your analysis is complete, use the APPROVE or DENY buttons. Incorrect decisions will damage the bank's capital. Denying a legitimate client also has a financial penalty. Good luck.",
+    title: "AUTHORIZATION CLEARANCE",
+    content: "Complete analysis, then issue AUTHORIZATION or DENIAL clearance codes. Incorrect assessments compromise national financial security. Denying legitimate assets also incurs operational penalties. The nation depends on your judgment.",
     highlightId: 'decision-buttons-onboarding',
   }
 ];
@@ -82,19 +82,17 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onClose }) => {
   const handleSkip = () => {
     onClose();
   }
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 animate-fade-in">
+    <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50 animate-fade-in">
        {currentStep.highlightId && Object.keys(highlightStyle).length > 0 && <div className="highlight-pulse" style={highlightStyle} />}
-      <div className="bg-white dark:bg-gray-800 border border-green-500 rounded-lg shadow-2xl p-8 max-w-lg w-full text-center relative z-100">
-        <h2 className="text-4xl font-display text-green-600 dark:text-green-400 mb-4">{currentStep.title}</h2>
-        <p className="text-gray-700 dark:text-gray-300 mb-6 text-lg">{currentStep.content}</p>
-        <div className="flex justify-between items-center">
-            <button onClick={handleSkip} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                Skip Briefing
+      <div className="bg-black border-2 border-green-500 rounded-none shadow-[0_0_50px_rgba(34,197,94,0.8)] p-8 max-w-lg w-full text-center relative z-100">
+        <h2 className="text-4xl font-mono text-green-400 mb-4 tracking-wider">{currentStep.title}</h2>
+        <p className="text-green-300 mb-6 text-lg font-mono leading-relaxed">{currentStep.content}</p>
+        <div className="flex justify-between items-center">            <button onClick={handleSkip} className="text-green-600 hover:text-green-400 font-mono transition-colors tracking-wider">
+                SKIP CLASSIFIED BRIEFING
             </button>
-            <button onClick={handleNext} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300 text-xl font-display">
-                {stepIndex === steps.length - 1 ? "Protect Capital" : "Next"}
+            <button onClick={handleNext} className="bg-green-700 hover:bg-green-600 text-green-100 font-bold py-2 px-6 rounded-none transition-all duration-300 text-xl font-mono border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.5)] tracking-wider">
+                {stepIndex === steps.length - 1 ? "BEGIN OPERATION" : "CONTINUE BRIEFING"}
             </button>
         </div>
       </div>

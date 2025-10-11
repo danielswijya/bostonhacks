@@ -136,7 +136,7 @@ const PhoneCallModal: React.FC<PhoneCallModalProps> = ({ scenario, onClose }) =>
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: scenario.voiceGender === 'male' ? 'Zephyr' : 'Kore' } },
           },
-          systemInstruction: `You are roleplaying as ${scenario.customerName}, whose personality is: ${scenario.personality}. Keep your answers short and in character. The user is a bank analyst trying to verify a transaction.`,
+          systemInstruction: `You are roleplaying as ${scenario.customerName}, a subject under financial surveillance during the Cold War era. Your personality profile: ${scenario.personality}. You are being interrogated by a bank security analyst via encrypted telephone line. Speak with the tension and paranoia of the era - be suspicious, guarded, and use period-appropriate language. Keep responses brief and in character. The analyst is trying to verify a suspicious transaction that could be part of espionage funding.`,
         },
       });
       sessionRef.current = sessionPromise;
@@ -178,54 +178,48 @@ const PhoneCallModal: React.FC<PhoneCallModalProps> = ({ scenario, onClose }) =>
   };
 
   const renderStatus = () => {
-    switch (status) {
-      case 'idle':
-        return <button onClick={startCall} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl font-display">Initiate Call</button>;
+    switch (status) {      case 'idle':
+        return <button onClick={startCall} className="bg-green-700 hover:bg-green-600 text-green-100 font-bold py-3 px-6 rounded-none text-xl font-mono border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.5)] tracking-wider">INITIATE SECURE LINE</button>;
       case 'connecting':
-        return <div className="text-yellow-500 dark:text-yellow-400 animate-pulse text-lg">Connecting...</div>;
+        return <div className="text-yellow-400 animate-pulse text-lg font-mono tracking-wider">ESTABLISHING ENCRYPTED CONNECTION...</div>;
       case 'connected':
         return (
             <div className="flex flex-col items-center">
-                <div className="flex items-center text-green-600 dark:text-green-400">
+                <div className="flex items-center text-green-400">
                     <span className="relative flex h-3 w-3 mr-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                     </span>
-                    <p className="text-lg">Connected</p>
+                    <p className="text-lg font-mono tracking-wider">SECURE LINE ACTIVE</p>
                 </div>
-                <p className="font-mono text-2xl mt-1">{formatTime(callDuration)}</p>
+                <p className="font-mono text-2xl mt-1 text-green-300">{formatTime(callDuration)}</p>
             </div>
         );
       case 'error':
-        return <p className="text-red-600 dark:text-red-500 text-lg">Connection Error</p>;
-      case 'closed':
-        return (
+        return <p className="text-red-400 text-lg font-mono tracking-wider">CONNECTION TERMINATED - SECURITY BREACH</p>;
+      case 'closed':        return (
             <div className="flex flex-col items-center">
-                 <p className="text-gray-600 dark:text-gray-400 text-lg">Call Ended</p>
-                 <p className="font-mono text-2xl mt-1">{formatTime(callDuration)}</p>
+                 <p className="text-green-400 text-lg font-mono tracking-wider">TRANSMISSION ENDED</p>
+                 <p className="font-mono text-2xl mt-1 text-green-300">{formatTime(callDuration)}</p>
             </div>
         );
       default:
         return null;
     }
   };
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 animate-fade-in">
-      <div className="bg-white dark:bg-gray-800 border border-green-500 rounded-lg shadow-2xl p-8 max-w-md w-full text-center">
-        <h3 className="text-3xl font-display text-green-600 dark:text-green-400 mb-2">Voice Signature Verification</h3>
-        <div className="bg-gray-100 dark:bg-gray-900 p-3 rounded-md mb-6 border border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Client</p>
-            <p className="text-xl font-bold text-gray-900 dark:text-white">{scenario.customerName}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 italic">Persona: {scenario.personality}</p>
+    <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50 animate-fade-in">
+      <div className="bg-black border-2 border-green-500 rounded-none shadow-[0_0_50px_rgba(34,197,94,0.8)] p-8 max-w-md w-full text-center">        <h3 className="text-3xl font-mono text-green-400 mb-2 tracking-wider">VOICE AUTHENTICATION PROTOCOL</h3>
+        <div className="bg-black p-3 rounded-none mb-6 border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.3)]">
+            <p className="text-sm text-green-600 font-mono">SUBJECT</p>
+            <p className="text-xl font-bold text-green-300 font-mono tracking-wide">{scenario.customerName}</p>
+            <p className="text-xs text-green-600 mt-1 italic font-mono">BEHAVIORAL PROFILE: {scenario.personality.toUpperCase()}</p>
         </div>
         
         <div className="h-20 flex items-center justify-center">
             {renderStatus()}
-        </div>
-
-        <button onClick={endCall} className="mt-6 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 text-lg font-display">
-          {status === 'connected' || status === 'connecting' ? 'End Call' : 'Close'}
+        </div>        <button onClick={endCall} className="mt-6 w-full bg-red-700 hover:bg-red-600 text-red-100 font-bold py-2 px-4 rounded-none transition-all duration-300 text-lg font-mono border-2 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)] tracking-wider">
+          {status === 'connected' || status === 'connecting' ? 'TERMINATE CONNECTION' : 'ABORT PROTOCOL'}
         </button>
       </div>
     </div>
