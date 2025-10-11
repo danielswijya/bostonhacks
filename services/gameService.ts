@@ -81,6 +81,10 @@ const generateImage = async (prompt: string): Promise<string> => {
 
 export const generateScenario = async (): Promise<Scenario> => {
   try {
+    // Select a random client from VALID_CLIENTS
+    const client = VALID_CLIENTS[Math.floor(Math.random() * VALID_CLIENTS.length)];
+
+    // Generate scenario using the selected client's info
     const prompt = `
       You are a game master for a financial cybersecurity game called "Aegis Sentinel".
       The player is a Transaction Analyst at a high-stakes financial institution.
@@ -90,8 +94,12 @@ export const generateScenario = async (): Promise<Scenario> => {
 
       Use the following information as the ground truth for the game.
       
-      **Valid Client Database:**
-      ${JSON.stringify(VALID_CLIENTS, null, 2)}
+      **Client for this scenario:**
+      Name: ${client.name}
+      Account Number: ${client.accountNumber}
+      Account Type: ${client.accountType}
+      Account Status: ${client.accountStatus}
+      Security Notes: ${client.securityNotes}
 
       **Federal Compliance Protocols:**
       ${COMPLIANCE_PROTOCOLS.map(p => `- ${p}`).join('\n')}
@@ -107,9 +115,10 @@ export const generateScenario = async (): Promise<Scenario> => {
       4.  **Languages:** Occasionally (25% of the time), generate the 'initialMessage' in a language other than English (like Spanish or French), and provide the English translation in 'initialMessageEnglish'.
       5.  **Suggested Prompts:** Generate 3 relevant, short questions an analyst might ask to verify this specific scenario.
       
-      Generate a new, unique scenario now.
+  Generate a new, unique scenario now. The customerName, accountNumber, accountType, accountStatus, and securityNotes must match the client info above.
+  IMPORTANT: The scenario can be either a legitimate request or a sophisticated scam/phishing attempt, even if the client is real. Scams should sometimes use real client info to increase realism and challenge the player.
     `;
-    
+
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
@@ -119,13 +128,22 @@ export const generateScenario = async (): Promise<Scenario> => {
         temperature: 1.0,
       },
     });
-    
+
     const jsonText = response.text.trim();
     const scenarioTextData = JSON.parse(jsonText);
 
-    const customerImageB64 = await generateImage(`16-bit pixel art style, professional headshot of a person named ${scenarioTextData.customerName}, on a plain light gray background. Retro video game style, centered.`);
-    
-    return { ...scenarioTextData, customerImage: customerImageB64 };
+    const customerImageB64 = await generateImage(`16-bit pixel art style, professional headshot of a person named ${client.name}, on a plain light gray background. Retro video game style, centered.`);
+
+    // Return scenario with client info enforced
+    return {
+      ...scenarioTextData,
+      customerName: client.name,
+      accountNumber: client.accountNumber,
+      accountType: client.accountType,
+      accountStatus: client.accountStatus,
+      securityNotes: client.securityNotes,
+      customerImage: customerImageB64
+    };
 
   } catch (error) {
     console.error("Error generating scenario with Gemini:", error);
@@ -175,6 +193,7 @@ export const generateChatResponse = async (history: { role: string, parts: { tex
             systemInstruction += `
                 **YOUR GOAL: YOU ARE A LEGITIMATE BANK CLIENT.**
                 You genuinely need help with your request.
+                Be polite and cooperative, but not enough to make it too obvious for the analyst.
                 - If the analyst is professional and helpful, be cooperative.
                 - If the analyst is unprofessional (rude, off-topic), become more impatient, suspicious, or annoyed. Show this through your tone, not by stating it directly.
             `;
