@@ -1,45 +1,112 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Scenario, ChatMessage } from '../types';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Scenario, ChatMessage, SystemAlert, ResolvedCase, ClientData } from '../types';
 import { generateScenario, generateChatResponse } from '../services/gameService';
 import { playSound } from '../services/soundService';
+import { FULL_CLIENT_ROSTER } from '../constants';
 import LeftPanel from './LeftPanel';
 import RightPanel from './RightPanel';
 import PhoneCallModal from './PhoneCallModal';
 import OnboardingModal from './OnboardingModal';
 import EndOfDayModal from './EndOfDayModal';
+import MarketTicker from './MarketTicker';
+import SystemAlerts from './SystemAlerts';
 
-type DecisionResult = 'correct' | 'incorrect' | 'pending';
+
 interface DayStats {
   correct: number;
   incorrect: number;
+  capitalLost: number;
 }
 
 const CASES_PER_DAY = 5;
+const MAX_BANK_CAPITAL = 10000000; // $10 Million
+const CAPITAL_LEAK_RATE = 50000; // $50k per second
+const CLIENT_DB_INITIAL_SIZE = 20;
+const CLIENT_DB_GROWTH_PER_DAY = 15;
 
-const GameScreen: React.FC = () => {
+const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }> = ({ toggleTheme, theme }) => {
   const [currentScenario, setCurrentScenario] = useState<Scenario | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [decision, setDecision] = useState<DecisionResult>('pending');
-  const [campusSecurity, setCampusSecurity] = useState<number>(100);
-  const [casesResolved, setCasesResolved] = useState<number>(0);
-  const [scamAlert, setScamAlert] = useState<boolean>(false);
+  
+  // New financial state
+  const [bankCapital, setBankCapital] = useState<number>(MAX_BANK_CAPITAL);
+  const [capitalHistory, setCapitalHistory] = useState<number[]>([MAX_BANK_CAPITAL]);
+  const [isLeaking, setIsLeaking] = useState<boolean>(false);
+  const leakIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isCustomerTyping, setIsCustomerTyping] = useState<boolean>(false);
   const [isCallActive, setIsCallActive] = useState<boolean>(false);
 
-  // New state for game loop
+  // Game loop state
   const [showOnboarding, setShowOnboarding] = useState<boolean>(true);
   const [currentDay, setCurrentDay] = useState<number>(1);
   const [casesToday, setCasesToday] = useState<number>(0);
-  const [dayStats, setDayStats] = useState<DayStats>({ correct: 0, incorrect: 0 });
+  const [dayStats, setDayStats] = useState<DayStats>({ correct: 0, incorrect: 0, capitalLost: 0 });
   const [showEndOfDay, setShowEndOfDay] = useState<boolean>(false);
+  const [resolvedCases, setResolvedCases] = useState<ResolvedCase[]>([]);
+  const [visibleClients, setVisibleClients] = useState<ClientData[]>([]);
+
+  // IT Dispatch Cooldown
+  const [itDispatchCooldown, setItDispatchCooldown] = useState<number>(0);
+
+  // System Alerts
+  const [alerts, setAlerts] = useState<SystemAlert[]>([]);
+  const alertIdCounter = useRef(0);
+
+  const addAlert = (message: string, type: SystemAlert['type']) => {
+    const id = alertIdCounter.current++;
+    setAlerts(prev => [...prev, { id, message, type }]);
+  };
+
+  const updateVisibleClients = (day: number) => {
+    const newSize = CLIENT_DB_INITIAL_SIZE + (day - 1) * CLIENT_DB_GROWTH_PER_DAY;
+    setVisibleClients(FULL_CLIENT_ROSTER.slice(0, newSize));
+  }
+
+  useEffect(() => {
+    // Set initial client database size
+    updateVisibleClients(1);
+  }, []);
+
+
+  useEffect(() => {
+    if (isLeaking) {
+      leakIntervalRef.current = setInterval(() => {
+        setBankCapital(prevCapital => {
+          const newCapital = prevCapital - CAPITAL_LEAK_RATE;
+          if (newCapital <= 0) {
+            if (leakIntervalRef.current) clearInterval(leakIntervalRef.current);
+            setIsLeaking(false);
+            return 0;
+          }
+          return newCapital;
+        });
+        setDayStats(prev => ({...prev, capitalLost: prev.capitalLost + CAPITAL_LEAK_RATE}))
+      }, 1000);
+    } else {
+      if (leakIntervalRef.current) {
+        clearInterval(leakIntervalRef.current);
+      }
+    }
+    return () => {
+      if (leakIntervalRef.current) clearInterval(leakIntervalRef.current);
+    };
+  }, [isLeaking]);
+
+  useEffect(() => {
+    setCapitalHistory(prev => {
+        const newHistory = [...prev, bankCapital];
+        if (newHistory.length > 50) {
+            return newHistory.slice(newHistory.length - 50);
+        }
+        return newHistory;
+    });
+  }, [bankCapital]);
 
 
   const fetchNextScenario = useCallback(async () => {
     setIsLoading(true);
-    setScamAlert(false);
-    setDecision('pending');
     setCurrentScenario(null); 
     setChatHistory([]);
     const scenario = await generateScenario();
@@ -61,9 +128,12 @@ const GameScreen: React.FC = () => {
   }, [casesToday, fetchNextScenario]);
 
   const handleStartNextDay = () => {
-    setCurrentDay(prev => prev + 1);
+    const nextDay = currentDay + 1;
+    setCurrentDay(nextDay);
+    updateVisibleClients(nextDay);
     setCasesToday(0);
-    setDayStats({ correct: 0, incorrect: 0 });
+    setDayStats({ correct: 0, incorrect: 0, capitalLost: 0 });
+    setResolvedCases([]);
     setShowEndOfDay(false);
     fetchNextScenario();
   };
@@ -98,32 +168,56 @@ const GameScreen: React.FC = () => {
 
     const correctDecision = (approved && !currentScenario.isScam) || (!approved && currentScenario.isScam);
 
+    setResolvedCases(prev => [...prev, {
+        scenario: currentScenario,
+        playerDecision: approved ? 'approved' : 'denied',
+        isCorrect: correctDecision
+    }]);
+
     if (correctDecision) {
-      setDecision('correct');
-      setCasesResolved(prev => prev + 1);
       setDayStats(prev => ({ ...prev, correct: prev.correct + 1 }));
     } else {
-      setDecision('incorrect');
-      const newSecurity = Math.max(0, campusSecurity - 20);
-      setCampusSecurity(newSecurity);
       setDayStats(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
       if (navigator.vibrate) {
-        navigator.vibrate(200);
+        navigator.vibrate([200, 100, 200]);
       }
       if(currentScenario.isScam){
-        setScamAlert(true);
+        setIsLeaking(true);
+        addAlert("Anomalous capital outflow detected! Breach protocol initiated.", 'error');
+      } else {
+        // Penalty for denying a valid customer
+        const penalty = 500000; // $500k penalty
+        setBankCapital(prev => Math.max(0, prev - penalty));
+        setDayStats(prev => ({...prev, capitalLost: prev.capitalLost + penalty}));
+        addAlert("Legitimate transaction denied. Client confidence impacted.", 'info');
       }
+    }
+    
+    handleNextCase();
+  };
+
+  const handleDispatchIT = () => {
+    if (isLeaking) {
+      setIsLeaking(false);
+      setItDispatchCooldown(casesToday + 2); // Cooldown for 2 cases
+      addAlert("IT Security dispatched. Leak quarantined.", 'success');
+      playSound('approve');
     }
   };
   
   const resetGame = () => {
-    setCampusSecurity(100);
-    setCasesResolved(0);
+    setBankCapital(MAX_BANK_CAPITAL);
+    setCapitalHistory([MAX_BANK_CAPITAL]);
+    setIsLeaking(false);
+    setResolvedCases([]);
+    updateVisibleClients(1);
     setCurrentDay(1);
     setCasesToday(0);
-    setDayStats({ correct: 0, incorrect: 0 });
+    setDayStats({ correct: 0, incorrect: 0, capitalLost: 0 });
     setShowEndOfDay(false);
     setShowOnboarding(true); 
+    setItDispatchCooldown(0);
+    setAlerts([]);
     fetchNextScenario();
   };
 
@@ -131,29 +225,30 @@ const GameScreen: React.FC = () => {
     return <OnboardingModal onClose={() => setShowOnboarding(false)} />;
   }
 
-  if (campusSecurity <= 0) {
+  if (bankCapital <= 0) {
     return (
-        <div className="text-center p-8 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-2xl animate-fade-in border border-gray-200 dark:border-gray-700">
-            <h2 className="text-6xl font-display text-red-600 dark:text-red-500 mb-4">MAJOR SECURITY BREACH</h2>
-            <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">Too many incorrect decisions have led to a campus-wide security breach.</p>
-            <p className="mb-4 text-gray-600 dark:text-gray-400">Total Cases Resolved: {casesResolved}</p>
+        <div className="text-center p-8 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-2xl animate-fade-in border border-red-500 dark:border-red-700">
+            <h2 className="text-6xl font-display text-red-600 dark:text-red-500 mb-4">BANK CAPITAL DEPLETED</h2>
+            <p className="text-xl mb-6 text-gray-700 dark:text-gray-300">A catastrophic capital breach has led to total asset loss and market collapse. Your position has been terminated.</p>
+            <p className="mb-4 text-gray-600 dark:text-gray-400">Total Days Survived: {currentDay - 1}</p>
             <button
                 onClick={resetGame}
                 className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300"
             >
-                Start New Position
+                Initiate New Simulation
             </button>
         </div>
     );
   }
 
   if (showEndOfDay) {
-    return <EndOfDayModal day={currentDay} stats={dayStats} onNextDay={handleStartNextDay} />;
+    return <EndOfDayModal day={currentDay} stats={dayStats} onNextDay={handleStartNextDay} resolvedCases={resolvedCases} />;
   }
 
   return (
     <>
-      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 transition-shadow duration-500 rounded-lg ${scamAlert ? 'shadow-2xl shadow-red-500/20 dark:shadow-red-500/50' : ''}`}>
+      <MarketTicker capital={bankCapital} history={capitalHistory} toggleTheme={toggleTheme} theme={theme}/>
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 transition-shadow duration-500 rounded-lg ${isLeaking ? 'shadow-2xl shadow-red-500/20 dark:shadow-red-500/50' : ''}`}>
         <div id="left-panel-onboarding" className="lg:col-span-1">
           <LeftPanel 
             scenario={currentScenario} 
@@ -162,21 +257,22 @@ const GameScreen: React.FC = () => {
             isCustomerTyping={isCustomerTyping}
             onSendMessage={handleSendMessage}
             onStartCall={() => setIsCallActive(true)}
-            decisionMade={decision !== 'pending'}
+            decisionMade={isLoading}
           />
         </div>
         <div id="right-panel-onboarding" className="lg:col-span-1">
           <RightPanel 
               onDecision={handleDecision}
               isLoading={isLoading}
-              decision={decision}
-              rationale={currentScenario?.scamRationale || ''}
-              cybersecurityTip={currentScenario?.cybersecurityTip || ''}
-              onNextCase={handleNextCase}
-              campusSecurity={campusSecurity}
+              clients={visibleClients}
+              bankCapital={bankCapital}
+              maxBankCapital={MAX_BANK_CAPITAL}
+              isLeaking={isLeaking}
               day={currentDay}
               casesToday={casesToday}
               casesPerDay={CASES_PER_DAY}
+              onDispatchIT={handleDispatchIT}
+              itDispatchCooldownCases={itDispatchCooldown}
           />
         </div>
       </div>
@@ -186,6 +282,7 @@ const GameScreen: React.FC = () => {
           onClose={() => setIsCallActive(false)}
         />
       )}
+      <SystemAlerts alerts={alerts} onDismiss={(id) => setAlerts(prev => prev.filter(a => a.id !== id))} />
     </>
   );
 };

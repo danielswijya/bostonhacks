@@ -12,22 +12,27 @@ interface Step {
 
 const steps: Step[] = [
   {
-    title: "Welcome to the IT Help Desk",
-    content: "You're a student volunteer at the University IT Help Desk. Your job is to handle student requests, spot scams, and protect the campus network. Let's go over your tools.",
+    title: "Welcome to the Financial Crimes Unit",
+    content: "You are a Transaction Analyst at Aegis Global Bank. Your primary duty is to protect the bank's liquid capital from a global network of cybercriminals. The market is watching.",
   },
   {
-    title: "The Request Panel",
-    content: "On the left, you'll see the student's request. You can chat with them, view their profile, and call them to verify their identity. Pay close attention to the details.",
+    title: "The Transaction Request",
+    content: "On the left is the client's request. You can chat with them, view their profile, and initiate a 'Voice Signature Verification' call to gather intelligence.",
     highlightId: 'left-panel-onboarding',
   },
   {
-    title: "The IT Dashboard",
-    content: "On the right is your dashboard. Use the 'Student Database' and 'University Policies' tabs to cross-reference information and check for red flags.",
+    title: "The Analysis Terminal",
+    content: "On the right is your terminal. Use the 'Client Ledger' and 'Compliance Protocols' to cross-reference every detail. A single mistake can trigger a crisis.",
     highlightId: 'tabs-onboarding',
   },
   {
-    title: "Make Your Decision",
-    content: "Once you have enough information, use the APPROVE or DENY buttons to resolve the case. Incorrect decisions will damage the campus security rating. Good luck.",
+    title: "Capital Leaks & IT Dispatch",
+    content: "If you approve a fraudulent transaction, it will trigger a real-time Capital Leak. Use the 'Dispatch IT Security' button to stop the leak, but be warned: the team has a cooldown period after each deployment.",
+    highlightId: 'it-dispatch-onboarding',
+  },
+  {
+    title: "Authorize or Deny",
+    content: "Once your analysis is complete, use the APPROVE or DENY buttons. Incorrect decisions will damage the bank's capital. Denying a legitimate client also has a financial penalty. Good luck.",
     highlightId: 'decision-buttons-onboarding',
   }
 ];
@@ -55,9 +60,14 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onClose }) => {
       }
     };
 
-    updateHighlight();
+    // Delay to allow layout to settle
+    const timeoutId = setTimeout(updateHighlight, 50);
     window.addEventListener('resize', updateHighlight);
-    return () => window.removeEventListener('resize', updateHighlight);
+    
+    return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener('resize', updateHighlight);
+    }
 
   }, [stepIndex, currentStep.highlightId]);
 
@@ -81,10 +91,10 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({ onClose }) => {
         <p className="text-gray-700 dark:text-gray-300 mb-6 text-lg">{currentStep.content}</p>
         <div className="flex justify-between items-center">
             <button onClick={handleSkip} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                Skip Tutorial
+                Skip Briefing
             </button>
             <button onClick={handleNext} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-colors duration-300 text-xl font-display">
-                {stepIndex === steps.length - 1 ? "Start Shift" : "Next"}
+                {stepIndex === steps.length - 1 ? "Protect Capital" : "Next"}
             </button>
         </div>
       </div>

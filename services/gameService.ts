@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { VALID_STUDENTS, UNIVERSITY_POLICIES } from '../constants';
+import { VALID_CLIENTS, COMPLIANCE_PROTOCOLS } from '../constants';
 import { Scenario } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
@@ -9,7 +9,7 @@ const scenarioSchema = {
   properties: {
     customerName: {
       type: Type.STRING,
-      description: "The name of the student or scammer making the request. Should be plausible."
+      description: "The name of the bank client or scammer making the request. Should be plausible."
     },
     initialMessage: {
       type: Type.STRING,
@@ -17,7 +17,7 @@ const scenarioSchema = {
     },
     transactionType: {
       type: Type.STRING,
-      description: "The type of request, e.g., 'Financial Aid Disbursement', 'Password Reset', 'Course Registration Help', 'Update Contact Info'."
+      description: "The type of request, e.g., 'Wire Transfer', 'Password Reset', 'Account Unlock', 'Update Contact Info'."
     },
     details: {
       type: Type.STRING,
@@ -33,7 +33,7 @@ const scenarioSchema = {
     },
     personality: {
         type: Type.STRING,
-        description: "A brief description of the person's personality for chat and voice consistency (e.g., 'Anxious and worried about grades', 'Calm and professional', 'Friendly but slightly confused about university bureaucracy')."
+        description: "A brief description of the person's personality for chat and voice consistency (e.g., 'Anxious and worried about a late payment', 'Calm and professional', 'Friendly but slightly confused about banking bureaucracy')."
     },
     voiceGender: {
         type: Type.STRING,
@@ -50,11 +50,11 @@ const scenarioSchema = {
     suggestedPrompts: {
         type: Type.ARRAY,
         items: { type: Type.STRING },
-        description: "An array of 3 relevant, concise questions an IT help desk volunteer could ask to verify the student or request. These will be shown as clickable suggestions. E.g., 'Can you confirm your Student ID?', 'What is your declared major?'"
+        description: "An array of 3 relevant, concise questions a bank analyst could ask to verify the client or request. These will be shown as clickable suggestions. E.g., 'Can you confirm your Account Number?', 'What type of account do you hold?'"
     },
     cybersecurityTip: {
         type: Type.STRING,
-        description: "A concise, actionable cybersecurity tip for the player that is directly related to the scam or request type in the scenario. E.g., 'Always verify urgent requests from professors or staff via an official university email address or phone number.'"
+        description: "A concise, actionable cybersecurity tip for the player that is directly related to the scam or request type in the scenario. E.g., 'Always verify urgent fund transfer requests via a known, trusted call-back number, not one provided in an email.'"
     }
   },
   required: ["customerName", "initialMessage", "transactionType", "details", "isScam", "scamRationale", "personality", "voiceGender", "language", "initialMessageEnglish", "suggestedPrompts", "cybersecurityTip"],
@@ -82,29 +82,30 @@ const generateImage = async (prompt: string): Promise<string> => {
 export const generateScenario = async (): Promise<Scenario> => {
   try {
     const prompt = `
-      You are a game master for a cybersecurity game called "Cyber Guardian: Campus Duty".
-      The player is a student volunteer at a university's IT Help Desk.
-      Your role is to generate scenarios involving student requests. Some must be legitimate, others must be phishing or scam attempts.
+      You are a game master for a financial cybersecurity game called "Aegis Sentinel".
+      The player is a Transaction Analyst at a high-stakes financial institution.
+      Your role is to generate scenarios involving client requests. Some must be legitimate, others must be sophisticated phishing or scam attempts.
+      The context is a tense world of financial cyberwarfare.
       You must return your response in JSON format according to the provided schema.
 
       Use the following information as the ground truth for the game.
       
-      **Valid Student Database:**
-      ${JSON.stringify(VALID_STUDENTS, null, 2)}
+      **Valid Client Database:**
+      ${JSON.stringify(VALID_CLIENTS, null, 2)}
 
-      **University Security Policies:**
-      ${UNIVERSITY_POLICIES.map(p => `- ${p}`).join('\n')}
+      **Federal Compliance Protocols:**
+      ${COMPLIANCE_PROTOCOLS.map(p => `- ${p}`).join('\n')}
 
       **Scenario Generation Rules:**
-      1.  **Context:** Scenarios should be relevant to student life. Examples: financial aid scams, fake housing offers, phishing from 'professors', password resets, course registration issues.
+      1.  **Context:** Scenarios should be relevant to banking and finance. Examples: urgent wire transfers, business email compromise, phishing from 'executives', account lockouts, suspicious login alerts.
       2.  **Scam Nuances:** Scam red flags should be subtle. Examples:
           - A slightly misspelled name ("Alice Johnsen").
-          - A request violating a minor policy.
-          - Use of mild emotional manipulation (e.g., "My scholarship is due today!").
-          - **Voice Mismatch:** Occasionally create a gender mismatch where a scammer poses as a student of a different gender. Set 'voiceGender' to the scammer's true voice.
+          - A request violating a minor compliance protocol.
+          - Use of intense emotional manipulation (e.g., "This deal will fall through if the wire isn't sent in the next 10 minutes!").
+          - **Voice Mismatch:** Occasionally create a gender mismatch where a scammer poses as a client of a different gender. Set 'voiceGender' to the scammer's true voice.
       3.  **Educational Tips:** For every scenario, provide a relevant 'cybersecurityTip'. The tip must be practical advice related to the situation.
       4.  **Languages:** Occasionally (25% of the time), generate the 'initialMessage' in a language other than English (like Spanish or French), and provide the English translation in 'initialMessageEnglish'.
-      5.  **Suggested Prompts:** Generate 3 relevant, short questions an IT volunteer might ask to verify this specific scenario.
+      5.  **Suggested Prompts:** Generate 3 relevant, short questions an analyst might ask to verify this specific scenario.
       
       Generate a new, unique scenario now.
     `;
@@ -122,7 +123,7 @@ export const generateScenario = async (): Promise<Scenario> => {
     const jsonText = response.text.trim();
     const scenarioTextData = JSON.parse(jsonText);
 
-    const customerImageB64 = await generateImage(`16-bit pixel art style, full body character sprite of a person named ${scenarioTextData.customerName}, standing still, on a plain light gray background. Retro video game style, centered.`);
+    const customerImageB64 = await generateImage(`16-bit pixel art style, professional headshot of a person named ${scenarioTextData.customerName}, on a plain light gray background. Retro video game style, centered.`);
     
     return { ...scenarioTextData, customerImage: customerImageB64 };
 
@@ -154,28 +155,28 @@ export const generateScenario = async (): Promise<Scenario> => {
 export const generateChatResponse = async (history: { role: string, parts: { text: string }[] }[], personality: string, isScam: boolean): Promise<string> => {
     try {
         let systemInstruction = `
-            You are roleplaying as a character in a cybersecurity game.
+            You are roleplaying as a character in a financial cybersecurity game.
             Your core personality is: ${personality}.
             Keep your responses concise and in character. Do not reveal you are an AI.
 
-            The user is an IT help desk volunteer. Your reaction to them depends on their professionalism and your own hidden motive.
+            The user is a bank transaction analyst. Your reaction to them depends on their professionalism and your own hidden motive.
         `;
 
         if (isScam) {
             systemInstruction += `
-                **YOUR SECRET GOAL: YOU ARE A SCAMMER.**
-                Your goal is to trick the volunteer into approving your request.
+                **YOUR SECRET GOAL: YOU ARE A FINANCIAL SCAMMER.**
+                Your goal is to trick the analyst into approving your fraudulent request.
                 - If they ask for information you don't have, be evasive or provide fake details.
-                - If they become suspicious, use emotional manipulation (urgency, frustration, feigned confusion) to pressure them.
+                - If they become suspicious, use emotional manipulation (urgency, frustration, feigned confusion, appealing to authority) to pressure them.
                 - If they are unprofessional or rude, you can become more aggressive or annoyed to throw them off balance.
                 - Maintain your cover personality unless pressed.
             `;
         } else {
             systemInstruction += `
-                **YOUR GOAL: YOU ARE A LEGITIMATE STUDENT.**
+                **YOUR GOAL: YOU ARE A LEGITIMATE BANK CLIENT.**
                 You genuinely need help with your request.
-                - If the volunteer is professional and helpful, be cooperative.
-                - If the volunteer is unprofessional (rude, off-topic), become more impatient, suspicious, or annoyed. Show this through your tone, not by stating it directly.
+                - If the analyst is professional and helpful, be cooperative.
+                - If the analyst is unprofessional (rude, off-topic), become more impatient, suspicious, or annoyed. Show this through your tone, not by stating it directly.
             `;
         }
 

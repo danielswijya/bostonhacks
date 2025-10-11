@@ -15,7 +15,7 @@ interface LeftPanelProps {
 const CaseDetails: React.FC<{ scenario: Scenario }> = ({ scenario }) => {
     return (
         <div className="mb-4 p-3 bg-gray-200 dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700">
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2">Case Details</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-2">Transaction Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                     <p className="text-gray-500 dark:text-gray-400">Transaction Type</p>
@@ -47,7 +47,7 @@ const CustomerProfile: React.FC<{ name: string, image: string }> = ({ name, imag
             )}
         </div>
         <div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Requester</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Client</p>
             <p className="font-bold text-gray-900 dark:text-white text-lg">{name}</p>
         </div>
     </div>
@@ -158,7 +158,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled, suggeste
 const LeftPanel: React.FC<LeftPanelProps> = ({ scenario, isLoading, chatHistory, isCustomerTyping, onSendMessage, onStartCall, decisionMade }) => {
   return (
     <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-lg h-full min-h-[700px] flex flex-col border border-gray-200 dark:border-gray-700">
-      <h2 className="text-3xl font-display text-green-600 dark:text-green-400 border-b-2 border-gray-300 dark:border-gray-700 pb-2 mb-4">Request Panel</h2>
+      <h2 className="text-3xl font-display text-green-600 dark:text-green-400 border-b-2 border-gray-300 dark:border-gray-700 pb-2 mb-4">Transaction Request</h2>
       {isLoading ? <LoadingSpinner /> : scenario && (
         <div className="flex flex-col flex-grow animate-fade-in h-full">
             <CustomerProfile name={scenario.customerName} image={scenario.customerImage} />
@@ -172,7 +172,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ scenario, isLoading, chatHistory,
                     disabled={decisionMade}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-500 disabled:cursor-not-allowed text-lg font-display"
                 >
-                    Call Customer to Verify
+                    Voice Signature Verification
                 </button>
             </div>
             <div className="flex flex-col flex-grow min-h-0">

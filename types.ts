@@ -14,15 +14,27 @@ export interface Scenario {
   cybersecurityTip: string; // An educational tip related to the scenario
 }
 
-export interface StudentData {
+export interface ClientData {
   name: string;
-  studentId: string;
-  major: string;
-  enrollmentStatus: string;
+  accountNumber: string;
+  accountType: string;
+  accountStatus: string;
   securityNotes: string;
 }
 
 export interface ChatMessage {
   sender: 'user' | 'customer';
   text: string;
+}
+
+export interface SystemAlert {
+  id: number;
+  message: string;
+  type: 'error' | 'info' | 'success';
+}
+
+export interface ResolvedCase {
+  scenario: Scenario;
+  playerDecision: 'approved' | 'denied';
+  isCorrect: boolean;
 }

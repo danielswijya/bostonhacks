@@ -1,6 +1,6 @@
 {
-  "name": "Cyber Guardian: Campus Duty",
-  "description": "A dynamic text-based game where you act as a university IT help desk volunteer, approving or denying student requests to prevent cybersecurity threats and scams using Gemini.",
+  "name": "Aegis Sentinel: Financial Crimes Unit",
+  "description": "A high-stakes simulation where you act as a transaction analyst at a major bank, approving or denying requests to prevent financial fraud and cyber threats using Gemini.",
   "requestFramePermissions": [
     "microphone"
   ]

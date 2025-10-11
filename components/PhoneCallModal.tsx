@@ -60,6 +60,9 @@ async function decodeAudioData(data: Uint8Array, ctx: AudioContext, sampleRate: 
 
 const PhoneCallModal: React.FC<PhoneCallModalProps> = ({ scenario, onClose }) => {
   const [status, setStatus] = useState<'idle' | 'connecting' | 'connected' | 'error' | 'closed'>('idle');
+  const [callDuration, setCallDuration] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
   const sessionRef = useRef<Promise<LiveSession> | null>(null);
   const audioResources = useRef<{
     inputAudioContext: AudioContext;
@@ -88,6 +91,9 @@ const PhoneCallModal: React.FC<PhoneCallModalProps> = ({ scenario, onClose }) =>
         callbacks: {
           onopen: () => {
             setStatus('connected');
+            timerRef.current = setInterval(() => {
+                setCallDuration(prev => prev + 1);
+            }, 1000);
             const source = inputAudioContext.createMediaStreamSource(stream);
             const scriptProcessor = inputAudioContext.createScriptProcessor(4096, 1, 1);
             scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
@@ -118,9 +124,11 @@ const PhoneCallModal: React.FC<PhoneCallModalProps> = ({ scenario, onClose }) =>
           onerror: (e: ErrorEvent) => {
             console.error('Live session error:', e);
             setStatus('error');
+            if (timerRef.current) clearInterval(timerRef.current);
           },
           onclose: () => {
             setStatus('closed');
+            if (timerRef.current) clearInterval(timerRef.current);
           },
         },
         config: {
@@ -128,7 +136,7 @@ const PhoneCallModal: React.FC<PhoneCallModalProps> = ({ scenario, onClose }) =>
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: scenario.voiceGender === 'male' ? 'Zephyr' : 'Kore' } },
           },
-          systemInstruction: `You are roleplaying as ${scenario.customerName}, whose personality is: ${scenario.personality}. Keep your answers short and in character. The user is a bank teller trying to verify a transaction.`,
+          systemInstruction: `You are roleplaying as ${scenario.customerName}, whose personality is: ${scenario.personality}. Keep your answers short and in character. The user is a bank analyst trying to verify a transaction.`,
         },
       });
       sessionRef.current = sessionPromise;
@@ -149,6 +157,7 @@ const PhoneCallModal: React.FC<PhoneCallModalProps> = ({ scenario, onClose }) =>
         audioResources.current.inputAudioContext.close();
         audioResources.current.outputAudioContext.close();
     }
+    if (timerRef.current) clearInterval(timerRef.current);
     onClose();
   };
   
@@ -162,18 +171,40 @@ const PhoneCallModal: React.FC<PhoneCallModalProps> = ({ scenario, onClose }) =>
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+  };
+
   const renderStatus = () => {
     switch (status) {
       case 'idle':
-        return <button onClick={startCall} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl font-display">Start Call</button>;
+        return <button onClick={startCall} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-xl font-display">Initiate Call</button>;
       case 'connecting':
-        return <p className="text-yellow-500 dark:text-yellow-400 animate-pulse">Connecting...</p>;
+        return <div className="text-yellow-500 dark:text-yellow-400 animate-pulse text-lg">Connecting...</div>;
       case 'connected':
-        return <p className="text-green-600 dark:text-green-400">Connected - Speak into your microphone</p>;
+        return (
+            <div className="flex flex-col items-center">
+                <div className="flex items-center text-green-600 dark:text-green-400">
+                    <span className="relative flex h-3 w-3 mr-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                    <p className="text-lg">Connected</p>
+                </div>
+                <p className="font-mono text-2xl mt-1">{formatTime(callDuration)}</p>
+            </div>
+        );
       case 'error':
-        return <p className="text-red-600 dark:text-red-500">Connection Error. Please try again.</p>;
+        return <p className="text-red-600 dark:text-red-500 text-lg">Connection Error</p>;
       case 'closed':
-        return <p className="text-gray-600 dark:text-gray-400">Call Ended.</p>;
+        return (
+            <div className="flex flex-col items-center">
+                 <p className="text-gray-600 dark:text-gray-400 text-lg">Call Ended</p>
+                 <p className="font-mono text-2xl mt-1">{formatTime(callDuration)}</p>
+            </div>
+        );
       default:
         return null;
     }
@@ -181,14 +212,20 @@ const PhoneCallModal: React.FC<PhoneCallModalProps> = ({ scenario, onClose }) =>
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 animate-fade-in">
-      <div className="bg-white dark:bg-gray-800 border border-green-500 rounded-lg shadow-2xl p-8 max-w-sm w-full text-center">
-        <h3 className="text-3xl font-display text-green-600 dark:text-green-400 mb-4">Voice Call</h3>
-        <p className="text-gray-700 dark:text-gray-300 mb-6">Attempting to call: <span className="font-bold">{scenario.customerName}</span></p>
+      <div className="bg-white dark:bg-gray-800 border border-green-500 rounded-lg shadow-2xl p-8 max-w-md w-full text-center">
+        <h3 className="text-3xl font-display text-green-600 dark:text-green-400 mb-2">Voice Signature Verification</h3>
+        <div className="bg-gray-100 dark:bg-gray-900 p-3 rounded-md mb-6 border border-gray-200 dark:border-gray-700">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Client</p>
+            <p className="text-xl font-bold text-gray-900 dark:text-white">{scenario.customerName}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 italic">Persona: {scenario.personality}</p>
+        </div>
+        
         <div className="h-20 flex items-center justify-center">
             {renderStatus()}
         </div>
+
         <button onClick={endCall} className="mt-6 w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-300 text-lg font-display">
-          {status === 'connected' ? 'End Call' : 'Close'}
+          {status === 'connected' || status === 'connecting' ? 'End Call' : 'Close'}
         </button>
       </div>
     </div>
