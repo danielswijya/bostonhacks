@@ -175,6 +175,7 @@ export const generateChatResponse = async (history: { role: string, parts: { tex
             systemInstruction += `
                 **YOUR GOAL: YOU ARE A LEGITIMATE BANK CLIENT.**
                 You genuinely need help with your request.
+                Be polite and cooperative, but not enough to make it too obvious for the analyst. 
                 - If the analyst is professional and helpful, be cooperative.
                 - If the analyst is unprofessional (rude, off-topic), become more impatient, suspicious, or annoyed. Show this through your tone, not by stating it directly.
             `;

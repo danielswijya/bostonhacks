@@ -20,6 +20,8 @@ export interface ClientData {
   accountType: string;
   accountStatus: string;
   securityNotes: string;
+  email: string;
+  phoneNumber: string;
 }
 
 export interface ChatMessage {

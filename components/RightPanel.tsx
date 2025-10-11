@@ -18,11 +18,11 @@ type ActiveTab = 'database' | 'policies';
 const ClientLedger: React.FC<{clients: ClientData[]}> = ({ clients }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 10;
-
-    const filteredClients = clients.filter(client =>
+    const ITEMS_PER_PAGE = 10;    const filteredClients = clients.filter(client =>
         client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.accountNumber.toLowerCase().includes(searchTerm.toLowerCase())
+        client.accountNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.phoneNumber.includes(searchTerm)
     );
 
     const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
@@ -43,7 +43,7 @@ const ClientLedger: React.FC<{clients: ClientData[]}> = ({ clients }) => {
                         setSearchTerm(e.target.value);
                         setCurrentPage(1); // Reset to first page on search
                     }}
-                    placeholder="Search by name or Account Number..."
+                    placeholder="Search by name, account, email, or phone..."
                     className="w-full bg-black border border-green-500 text-green-400 font-mono rounded-none p-2 focus:outline-none focus:ring-1 focus:ring-green-400 focus:shadow-[0_0_10px_rgba(34,197,94,0.5)] placeholder-green-600"
                     aria-label="Search client ledger"
                 />
@@ -51,25 +51,29 @@ const ClientLedger: React.FC<{clients: ClientData[]}> = ({ clients }) => {
             <div className="flex-grow overflow-y-auto min-h-0">                <table className="w-full text-sm text-left text-green-400 font-mono border-collapse">
                     <thead className="text-xs text-green-300 uppercase bg-black border-b-2 border-green-500 sticky top-0 z-10">
                         <tr>
-                            <th scope="col" className="px-4 py-2 border border-green-500">Name</th>
-                            <th scope="col" className="px-4 py-2 border border-green-500">Account No.</th>
-                            <th scope="col" className="px-4 py-2 border border-green-500">Status</th>
-                            <th scope="col" className="px-4 py-2 border border-green-500">Security Notes</th>
+                            <th scope="col" className="px-2 py-2 border border-green-500">Name</th>
+                            <th scope="col" className="px-2 py-2 border border-green-500">Account No.</th>
+                            <th scope="col" className="px-2 py-2 border border-green-500">Email</th>
+                            <th scope="col" className="px-2 py-2 border border-green-500">Phone</th>
+                            <th scope="col" className="px-2 py-2 border border-green-500">Status</th>
+                            <th scope="col" className="px-2 py-2 border border-green-500">Security Notes</th>
                         </tr>
                     </thead>
                     <tbody>
                         {paginatedClients.length > 0 ? (
                             paginatedClients.map((client: ClientData) => (
                                 <tr key={client.accountNumber} className="bg-black hover:bg-green-900/20 border-b border-green-700/50">
-                                    <td className="px-4 py-2 border border-green-700/50 font-medium text-green-400">{client.name}</td>
-                                    <td className="px-4 py-2 border border-green-700/50 font-mono text-green-300">{client.accountNumber}</td>
-                                    <td className="px-4 py-2 border border-green-700/50 text-green-400">{client.accountStatus}</td>
-                                    <td className="px-4 py-2 border border-green-700/50 text-green-400">{client.securityNotes}</td>
+                                    <td className="px-2 py-2 border border-green-700/50 font-medium text-green-400">{client.name}</td>
+                                    <td className="px-2 py-2 border border-green-700/50 font-mono text-green-300">{client.accountNumber}</td>
+                                    <td className="px-2 py-2 border border-green-700/50 font-mono text-green-300 text-xs">{client.email}</td>
+                                    <td className="px-2 py-2 border border-green-700/50 font-mono text-green-300 text-xs">{client.phoneNumber}</td>
+                                    <td className="px-2 py-2 border border-green-700/50 text-green-400">{client.accountStatus}</td>
+                                    <td className="px-2 py-2 border border-green-700/50 text-green-400 text-xs">{client.securityNotes}</td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={4} className="text-center p-4 text-green-600 border border-green-700/50">
+                                <td colSpan={6} className="text-center p-4 text-green-600 border border-green-700/50">
                                     No clients found.
                                 </td>
                             </tr>

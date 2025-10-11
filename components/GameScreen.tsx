@@ -58,10 +58,9 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
     const id = alertIdCounter.current++;
     setAlerts(prev => [...prev, { id, message, type }]);
   };
-
   const updateVisibleClients = (day: number) => {
-    const newSize = CLIENT_DB_INITIAL_SIZE + (day - 1) * CLIENT_DB_GROWTH_PER_DAY;
-    setVisibleClients(FULL_CLIENT_ROSTER.slice(0, newSize));
+    // Show all clients from the start
+    setVisibleClients(FULL_CLIENT_ROSTER);
   }
 
   useEffect(() => {
@@ -234,7 +233,7 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
                 onClick={resetGame}
                 className="bg-green-700 hover:bg-green-600 text-green-100 font-bold py-3 px-6 rounded-none transition-all duration-300 font-mono border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.5)]"
             >
-                INITIATE NEW SIMULATION
+                ---ENTER INTO A SECURE LINE---
             </button>
         </div>
     );

@@ -96,7 +96,7 @@ const MarketTicker: React.FC<MarketTickerProps> = ({ capital, maxCapital, histor
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
     };    return (
-        <header className="sticky top-0 z-50 bg-black p-3 rounded-lg shadow-2xl border-2 border-green-500 backdrop-blur-sm bg-opacity-95 shadow-green-500/20">
+        <header className="relative z-50 bg-black p-3 rounded-none shadow-2xl border-2 border-green-500 bg-opacity-100 shadow-green-500/20 mb-4">
             {/* First Row - Game Info and Controls */}
             <div className="flex justify-between items-center mb-2 px-2">
                 <h1 className="text-2xl font-display text-green-400 font-bold tracking-wider">AEGIS SENTINEL // FCU</h1>
