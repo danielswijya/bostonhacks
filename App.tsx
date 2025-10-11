@@ -12,6 +12,7 @@ function App() {
     }
     return 'dark'; // default
   });
+  
 
   useEffect(() => {
     const root = window.document.documentElement;
