@@ -1,3 +1,66 @@
+// Scenario types pool
+const SCENARIO_TYPES = [
+  {
+    transactionType: 'Wire Transfer',
+    details: 'Urgent wire transfer to a charity for disaster relief.',
+  },
+  {
+    transactionType: 'Invoice Payment',
+    details: 'Vendor requests urgent payment for a business invoice.',
+  },
+  {
+    transactionType: 'Account Unlock',
+    details: 'Request to unlock account after failed multi-factor authentication.',
+  },
+  {
+    transactionType: 'Authorized User Addition',
+    details: 'Request to add a new authorized user to a business account.',
+  },
+  {
+    transactionType: 'Card Replacement',
+    details: 'Reporting a lost debit card and requesting a replacement.',
+  },
+  {
+    transactionType: 'Account Freeze',
+    details: 'Requesting a temporary freeze due to suspected fraud.',
+  },
+  {
+    transactionType: 'Joint Account Access',
+    details: 'Claiming to be a family member needing access to a joint account.',
+  },
+  {
+    transactionType: 'Large Withdrawal',
+    details: 'Requesting a large cash withdrawal for a property purchase.',
+  },
+  {
+    transactionType: 'Recovery Options Update',
+    details: 'Requesting to change account recovery options.',
+  },
+  {
+    transactionType: 'Suspicious Email',
+    details: 'Claiming to have received a suspicious email and asking for advice.',
+  },
+  {
+    transactionType: 'Wire Reversal',
+    details: 'Requesting to reverse a wire transfer sent in error.',
+  },
+  {
+    transactionType: 'Loan Request',
+    details: 'Requesting loan approval or expedited processing.',
+  },
+  {
+    transactionType: 'Document Update',
+    details: 'Requesting to update business registration documents.',
+  },
+  {
+    transactionType: 'Travel Limit Lift',
+    details: 'Claiming to be traveling abroad and needing to lift transaction limits.',
+  },
+  {
+    transactionType: 'Account Closure',
+    details: 'Requesting to close account and transfer funds to a cryptocurrency wallet.',
+  },
+];
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { VALID_CLIENTS, COMPLIANCE_PROTOCOLS } from '../constants';
 import { Scenario } from '../types';
@@ -81,10 +144,13 @@ const generateImage = async (prompt: string): Promise<string> => {
 
 export const generateScenario = async (): Promise<Scenario> => {
   try {
-    // Select a random client from VALID_CLIENTS
+    // Select a random client and scenario type
     const client = VALID_CLIENTS[Math.floor(Math.random() * VALID_CLIENTS.length)];
+    const scenarioType = SCENARIO_TYPES[Math.floor(Math.random() * SCENARIO_TYPES.length)];
+    // Randomly assign isScam
+    const isScam = Math.random() < 0.5;
 
-    // Generate scenario using the selected client's info
+    // Generate scenario using the selected client's info and scenario type
     const prompt = `
       You are a game master for a financial cybersecurity game called "Aegis Sentinel".
       The player is a Transaction Analyst at a high-stakes financial institution.
@@ -101,6 +167,10 @@ export const generateScenario = async (): Promise<Scenario> => {
       Account Status: ${client.accountStatus}
       Security Notes: ${client.securityNotes}
 
+      **Scenario Type:**
+      Transaction Type: ${scenarioType.transactionType}
+      Details: ${scenarioType.details}
+
       **Federal Compliance Protocols:**
       ${COMPLIANCE_PROTOCOLS.map(p => `- ${p}`).join('\n')}
 
@@ -115,8 +185,8 @@ export const generateScenario = async (): Promise<Scenario> => {
       4.  **Languages:** Occasionally (25% of the time), generate the 'initialMessage' in a language other than English (like Spanish or French), and provide the English translation in 'initialMessageEnglish'.
       5.  **Suggested Prompts:** Generate 3 relevant, short questions an analyst might ask to verify this specific scenario.
       
-  Generate a new, unique scenario now. The customerName, accountNumber, accountType, accountStatus, and securityNotes must match the client info above.
-  IMPORTANT: The scenario can be either a legitimate request or a sophisticated scam/phishing attempt, even if the client is real. Scams should sometimes use real client info to increase realism and challenge the player.
+      Generate a new, unique scenario now. The customerName, accountNumber, accountType, accountStatus, and securityNotes must match the client info above.
+      IMPORTANT: The scenario can be either a legitimate request or a sophisticated scam/phishing attempt, even if the client is real. Scams should sometimes use real client info to increase realism and challenge the player. For this scenario, set isScam to ${isScam ? 'true' : 'false'} and provide rationale and feedback that matches this assignment.
     `;
 
     const response = await ai.models.generateContent({
@@ -142,6 +212,9 @@ export const generateScenario = async (): Promise<Scenario> => {
       accountType: client.accountType,
       accountStatus: client.accountStatus,
       securityNotes: client.securityNotes,
+      transactionType: scenarioType.transactionType,
+      details: scenarioType.details,
+      isScam,
       customerImage: customerImageB64
     };
 
