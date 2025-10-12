@@ -12,8 +12,8 @@ interface Step {
 
 const steps: Step[] = [
   {
-    title: "CLASSIFIED: OPERATION AEGIS",
-    content: "You are Agent designation: FINANCIAL ANALYST, Aegis Global Bank Counter-Intelligence Division. Your mission: Identify and neutralize enemy financial infiltration attempts. The Cold War has moved to the banking sector.",
+    title: "BROKEN BONDS",
+    content: "You are Agent designation: FINANCIAL ANALYST, Broken Bonds Global Bank Counter-Intelligence Division. Your mission: Identify and neutralize enemy financial infiltration attempts. The Cold War has moved to the banking sector.",
   },
   {
     title: "SUBJECT INTERROGATION TERMINAL",

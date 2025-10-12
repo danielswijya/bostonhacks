@@ -10,21 +10,38 @@ interface LeftPanelProps {
   onSendMessage: (message: string) => void;
   onStartCall: () => void;
   decisionMade: boolean;
+  phoneVerified: boolean | null; // null = not checked, true/false = result
 }
 
-const CaseDetails: React.FC<{ scenario: Scenario }> = ({ scenario }) => {
+const CaseDetails: React.FC<{ scenario: Scenario; phoneVerified: boolean | null }> = ({ scenario, phoneVerified }) => {
     return (
         <div className="mb-4 p-3 bg-black border-2 border-green-500 rounded-none shadow-[0_0_20px_rgba(34,197,94,0.3)]">
             <h3 className="font-bold text-green-400 mb-2 font-mono text-lg tracking-wide">TRANSACTION DETAILS</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
+                    <p className="text-green-600 font-mono">Subject</p>
+                    <p className="text-green-300 font-mono">{scenario.customerName}</p>
+                </div>
+                <div>
+                    <p className="text-green-600 font-mono">Phone Number</p>
+                    <p className="text-green-300 font-mono">{scenario.phoneNumber}</p>
+                </div>
+                <div>
                     <p className="text-green-600 font-mono">Transaction Type</p>
                     <p className="text-green-300 font-mono">{scenario.transactionType}</p>
                 </div>
-                <div>
+                {/* <div>
                     <p className="text-green-600 font-mono">Details</p>
                     <p className="text-green-300 font-mono">{scenario.details}</p>
-                </div>
+                </div> */}
+                {phoneVerified !== null && (
+                    <div className="col-span-2">
+                        <p className="text-green-600 font-mono">Phone Verification</p>
+                        <p className={`font-mono font-bold ${phoneVerified ? 'text-green-400' : 'text-red-400'}`}>
+                            {phoneVerified ? '✓ VERIFIED' : '✗ INVALID'}
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -39,13 +56,6 @@ const LoadingSpinner: React.FC = () => (
 
 const CustomerProfile: React.FC<{ name: string, image: string }> = ({ name, image }) => (
     <div className="flex items-center space-x-4 mb-4 p-3 bg-black border-2 border-green-500 rounded-none shadow-[0_0_20px_rgba(34,197,94,0.3)]">
-        <div className="w-24 h-24 bg-black border border-green-600 rounded-none overflow-hidden flex-shrink-0 flex items-center justify-center animate-jump shadow-[0_0_15px_rgba(34,197,94,0.4)]">
-            {image ? (
-                <img src={`data:image/png;base64,${image}`} alt="Customer" className="w-full h-full object-contain filter brightness-110 contrast-125" style={{imageRendering: 'pixelated'}}/>
-            ) : (
-                <div className="w-full h-full flex items-center justify-center text-green-600 text-xs font-mono">NO IMAGE</div>
-            )}
-        </div>
         <div>
             <p className="text-green-600 text-sm font-mono">CLIENT</p>
             <p className="font-bold text-green-300 text-lg font-mono tracking-wide">{name}</p>
@@ -88,10 +98,9 @@ const ChatWindow: React.FC<{ scenario: Scenario | null, chatHistory: ChatMessage
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chatHistory, isCustomerTyping]);    return (
-        <div className="flex-grow bg-black border-2 border-green-500 rounded-none p-4 space-y-4 overflow-y-auto shadow-[inset_0_0_20px_rgba(34,197,94,0.1)]">
-            {chatHistory.map((msg, index) => (
+        <div className="flex-grow bg-black border-2 border-green-500 rounded-none p-4 space-y-4 overflow-y-auto shadow-[inset_0_0_20px_rgba(34,197,94,0.1)]">            {chatHistory.map((msg, index) => (
                 <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`${msg.sender === 'user' ? 'bg-green-700 border-green-500' : 'bg-black-700 border-green-500'} text-green-600 p-3 rounded-none max-w-lg shadow-[0_0_15px_rgba(0,0,0,0.5)] border font-mono`}>
+                    <div className={`${msg.sender === 'user' ? 'bg-green-900 border-green-500 text-white' : 'bg-black border-green-500 text-green-600'} p-3 rounded-none max-w-lg shadow-[0_0_15px_rgba(0,0,0,0.5)] border font-mono`}>
                         {index === 0 && scenario ? <InitialMessage scenario={scenario} /> : <p>{msg.text}</p>}
                     </div>
                 </div>
@@ -114,34 +123,54 @@ interface ChatInputProps {
     suggestedPrompts: string[];
 }
 
+// Update the ChatInput to use database-verified prompts only
 const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled, suggestedPrompts }) => {
     const [input, setInput] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSendMessage(input);
-        setInput('');
+        if (input.trim()) {
+            onSendMessage(input);
+            setInput('');
+        }
     };
 
-    return (        <div className="mt-4">
-             <div className="flex gap-2 mb-2 flex-wrap">
-                {suggestedPrompts.map(prompt => (
-                    <button key={prompt} onClick={() => onSendMessage(prompt)} disabled={disabled} className="text-xs bg-black border border-green-600 hover:bg-green-900/30 hover:border-green-400 text-green-400 py-1 px-2 rounded-none disabled:opacity-50 disabled:cursor-not-allowed font-mono transition-all">
-                        {prompt}
-                    </button>
-                ))}
-            </div>
+    // Filter and validate suggested prompts to prevent hallucinations
+    const validatedPrompts = suggestedPrompts.filter(prompt => 
+        prompt && prompt.trim().length > 0
+    ).slice(0, 4); // Limit to 4 prompts maximum
+
+    return (
+        <div className="mt-4">
+            {validatedPrompts.length > 0 && (
+                <div className="flex gap-2 mb-2 flex-wrap">
+                    {validatedPrompts.map((prompt, index) => (
+                        <button 
+                            key={`${prompt}-${index}`} 
+                            onClick={() => onSendMessage(prompt)} 
+                            disabled={disabled} 
+                            className="text-xs bg-black border border-green-600 hover:bg-green-900/30 hover:border-green-400 text-green-400 py-1 px-2 rounded-none disabled:opacity-50 disabled:cursor-not-allowed font-mono transition-all"
+                        >
+                            {prompt}
+                        </button>
+                    ))}
+                </div>
+            )}
             <form onSubmit={handleSubmit} className="flex space-x-2">
                 <input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Type your message..."
+                    placeholder="Type your verification question..."
                     disabled={disabled}
                     className="flex-grow bg-black border border-green-500 text-green-400 font-mono rounded-none p-2 focus:outline-none focus:ring-1 focus:ring-green-400 focus:shadow-[0_0_10px_rgba(34,197,94,0.5)] disabled:bg-gray-900 disabled:border-gray-700 placeholder-green-700"
                     aria-label="Chat input"
                 />
-                <button type="submit" disabled={disabled} className="bg-green-700 hover:bg-green-600 text-green-100 font-bold p-2 rounded-none disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed font-mono border border-green-500">
+                <button 
+                    type="submit" 
+                    disabled={disabled || !input.trim()} 
+                    className="bg-green-700 hover:bg-green-600 text-green-100 font-bold p-2 rounded-none disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed font-mono border border-green-500"
+                >
                     SEND
                 </button>
             </form>
@@ -150,15 +179,15 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled, suggeste
 };
 
 
-const LeftPanel: React.FC<LeftPanelProps> = ({ scenario, isLoading, chatHistory, isCustomerTyping, onSendMessage, onStartCall, decisionMade }) => {
+const LeftPanel: React.FC<LeftPanelProps> = ({ scenario, isLoading, chatHistory, isCustomerTyping, onSendMessage, onStartCall, decisionMade, phoneVerified }) => {
   return (
     <div className="bg-black p-6 rounded-none shadow-[0_0_30px_rgba(34,197,94,0.3)] h-full min-h-[700px] flex flex-col border-2 border-green-500">
       <h2 className="text-3xl font-mono text-green-400 border-b-2 border-green-500 pb-2 mb-4 text-center tracking-wider">INCOMING TRANSMISSION</h2>
       {isLoading ? <LoadingSpinner /> : scenario && (
         <div className="flex flex-col flex-grow animate-fade-in h-full">
             <CustomerProfile name={scenario.customerName} image={scenario.customerImage} />
-            <CaseDetails scenario={scenario} />
-            <div className="mb-4">                <button 
+            <CaseDetails scenario={scenario} phoneVerified={phoneVerified} />
+            <div className="mb-4"><button 
                     onClick={() => {
                         playSound('startCall');
                         onStartCall();

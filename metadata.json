@@ -1,5 +1,5 @@
 {
-  "name": "Aegis Sentinel: Financial Crimes Unit",
+  "name": "Broken Bonds: Financial Crimes Unit",
   "description": "A high-stakes simulation where you act as a transaction analyst at a major bank, approving or denying requests to prevent financial fraud and cyber threats using Gemini.",
   "requestFramePermissions": [
     "microphone"
