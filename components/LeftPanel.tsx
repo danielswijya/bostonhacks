@@ -195,7 +195,7 @@ const LeftPanel: React.FC<LeftPanelProps> = ({ scenario, isLoading, chatHistory,
                     disabled={decisionMade}
                     className="w-full bg-black-700 hover:bg-green-600 text-green-300 font-bold py-2 px-4 rounded-none transition-all duration-300 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed text-lg font-mono border-2 border-green-500 tracking-wider"
                 >
-                    INITIATE VOICE AUTHENTICATION
+                    ---ENTER INTO A SECURE LINE---
                 </button>
             </div>
             <div className="flex flex-col flex-grow min-h-0">
