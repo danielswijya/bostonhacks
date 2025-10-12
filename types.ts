@@ -1,4 +1,5 @@
 export interface Scenario {
+  id?: string;
   customerName: string;
   phoneNumber: string; // The phone number the customer claims to have
   initialMessage: string;
@@ -13,6 +14,7 @@ export interface Scenario {
   initialMessageEnglish: string; // The English translation of the initial message
   suggestedPrompts: string[]; // AI-generated relevant questions for the teller
   cybersecurityTip: string; // An educational tip related to the scenario
+  actualClientData?: ClientData | null; // Real client data for verification
 }
 
 export interface ClientData {

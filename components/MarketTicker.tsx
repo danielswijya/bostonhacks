@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import capitolImage from '../src/img/Gemini_Generated_Image_82j5vg82j5vg82j5.png';
 
 type Theme = 'light' | 'dark';
 
@@ -226,11 +227,24 @@ const MarketTicker: React.FC<MarketTickerProps> = ({
             case 'crisis': return 'text-red-400';
             default: return 'text-green-400';
         }
-    };return (
-        <header className="relative z-50 bg-black p-3 rounded-none shadow-2xl border-2 border-green-500 bg-opacity-100 shadow-green-500/20 mb-4">
-            {/* First Row - Game Info and Controls */}
+    };    return (
+        <header 
+            className="relative z-50 bg-black p-3 rounded-none shadow-2xl border-2 border-green-500 bg-opacity-100 shadow-green-500/20 mb-4"
+            style={{
+                backgroundImage: `url(${capitolImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backgroundBlendMode: 'overlay'
+            }}
+        >
+            {/* Overlay to maintain readability */}
+            <div className="absolute inset-0 bg-black bg-opacity-70 rounded-none"></div>
+            
+            {/* Content wrapper with relative positioning */}
+            <div className="relative z-10">            {/* First Row - Game Info and Controls */}
             <div className="flex justify-between items-center mb-2 px-2">
-                <h1 className="text-2xl font-display text-green-400 font-bold tracking-wider">AEGIS SENTINEL // FCU</h1>                 <div className="flex items-center space-x-6">
+                <h1 className="text-2xl font-display text-green-400 font-bold tracking-wider">BROKEN BONDS</h1>                 <div className="flex items-center space-x-6">
                     <div className="flex items-center space-x-4 text-sm">
                         <div className="text-center">
                             <p className="text-green-300 text-xs uppercase tracking-wide">DAY</p>
@@ -320,9 +334,9 @@ const MarketTicker: React.FC<MarketTickerProps> = ({
                     @keyframes ticker {
                         0% { transform: translateX(0); }
                         100% { transform: translateX(-50%); }
-                    }
-                `}</style>
+                    }                `}</style>
             </div>
+            </div> {/* Close content wrapper */}
         </header>
     );
 };

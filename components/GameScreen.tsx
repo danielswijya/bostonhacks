@@ -88,6 +88,18 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
   const [showNewsletter, setShowNewsletter] = useState<boolean>(false);
   const [newsletterContent, setNewsletterContent] = useState<string>('');
   const [economicsUpdatesPaused, setEconomicsUpdatesPaused] = useState<boolean>(false);
+  // Add new state for geopolitical alert cooldowns
+  const [geopoliticalCooldowns, setGeopoliticalCooldowns] = useState<{
+    critical: number;
+    warning: number;
+    success: number;
+    info: number;
+  }>({
+    critical: 0,
+    warning: 0,
+    success: 0,
+    info: 0
+  });
   const updateVisibleClients = (day: number) => {
     // Show all clients from the start
     setVisibleClients(FULL_CLIENT_ROSTER);
@@ -95,10 +107,16 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
   useEffect(() => {
     // Set initial client database size
     updateVisibleClients(1);
-  }, []);
-  // Economic system effects
+  }, []);  // Economic system effects
   useEffect(() => {
-    if (economicsUpdatesPaused) return; // Don't update if paused
+    if (economicsUpdatesPaused || showOnboarding) {
+      // Clear event timer when economics are paused or during onboarding
+      if (eventTimerRef.current) {
+        clearInterval(eventTimerRef.current);
+        eventTimerRef.current = null;
+      }
+      return; // Don't update if paused or during onboarding
+    }
   
     economicIntervalRef.current = setInterval(() => {
       setBankCapital(prevCapital => {
@@ -149,8 +167,8 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
         
         const newCapital = Math.max(0, prevCapital + netCapitalChange);
         
-        // Check for geopolitical events (throttled to prevent spam)
-        if (Math.random() < 0.1) { // 10% chance per cycle to check
+        // REDUCED frequency: Check for geopolitical events less often to prevent spam
+        if (Math.random() < 0.03) { // Reduced from 0.1 (10%) to 0.03 (3%) chance per cycle
           setTimeout(() => checkGeopoliticalEvents(newCapital), 1000);
         }
         
@@ -263,10 +281,13 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
           cycle: null,
           message: 'Credit markets show increased lending activity.' 
         }
-      ];
-
-      const event = events[Math.floor(Math.random() * events.length)];
+      ];      const event = events[Math.floor(Math.random() * events.length)];
       const impact = event.impact();
+      
+      // Clear any existing event timer before starting a new one
+      if (eventTimerRef.current) {
+        clearInterval(eventTimerRef.current);
+      }
       
       // Apply immediate impact
       setBankCapital(prev => Math.max(0, prev + impact));
@@ -283,21 +304,22 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
         setEventTimeRemaining(prev => {
           if (prev <= 1) {
             setActiveEvent(null);
-            if (eventTimerRef.current) clearInterval(eventTimerRef.current);
+            if (eventTimerRef.current) {
+              clearInterval(eventTimerRef.current);
+              eventTimerRef.current = null;
+            }
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
       
-    }, RANDOM_EVENT_INTERVAL);
-
-    return () => {
+    }, RANDOM_EVENT_INTERVAL);    return () => {
       if (economicIntervalRef.current) clearInterval(economicIntervalRef.current);
       if (eventIntervalRef.current) clearInterval(eventIntervalRef.current);
       if (eventTimerRef.current) clearInterval(eventTimerRef.current);
     };
-  }, [interestRate, economicCycle, economicsUpdatesPaused]);
+  }, [interestRate, economicCycle, economicsUpdatesPaused, geopoliticalCooldowns, showOnboarding]);
   // Interest rate adjustment functions
   const adjustInterestRate = (change: number) => {
     setInterestRate(prev => {
@@ -330,9 +352,7 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
     return () => {
       if (leakIntervalRef.current) clearInterval(leakIntervalRef.current);
     };
-  }, [isLeaking]);
-
-  useEffect(() => {
+  }, [isLeaking]);  useEffect(() => {
     setCapitalHistory(prev => {
         const newHistory = [...prev, bankCapital];
         if (newHistory.length > 50) {
@@ -341,6 +361,32 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
         return newHistory;
     });
   }, [bankCapital]);
+  // Handle event timer when economics resume  
+  useEffect(() => {
+    // If economics just resumed and there's an active event with time remaining, restart the countdown
+    if (!economicsUpdatesPaused && !showOnboarding && activeEvent && eventTimeRemaining > 0 && !eventTimerRef.current) {
+      // Start the countdown timer
+      eventTimerRef.current = setInterval(() => {
+        setEventTimeRemaining(prev => {
+          if (prev <= 1) {
+            setActiveEvent(null);
+            if (eventTimerRef.current) {
+              clearInterval(eventTimerRef.current);
+              eventTimerRef.current = null;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+      return () => {
+      if (eventTimerRef.current && (economicsUpdatesPaused || showOnboarding)) {
+        clearInterval(eventTimerRef.current);
+        eventTimerRef.current = null;
+      }
+    };
+  }, [economicsUpdatesPaused, activeEvent, eventTimeRemaining, showOnboarding]);
 
   const fetchNextScenario = useCallback(async () => {
     setIsLoading(true);
@@ -405,7 +451,6 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
         fetchNextScenario();
     }
   }, [showOnboarding, fetchNextScenario]);
-
   const handleSendMessage = async (message: string) => {
     if (!message.trim() || !currentScenario) return;
 
@@ -413,12 +458,8 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
     setChatHistory(newHistory);
     setIsCustomerTyping(true);
 
-    const geminiHistory = newHistory.map(msg => ({
-        role: msg.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }]
-    }));
-
-    const responseText = await generateChatResponse(geminiHistory, currentScenario.personality, currentScenario.isScam);
+    // Use the correct generateChatResponse function from gameService
+    const responseText = await generateChatResponse(message, currentScenario, newHistory);
     
     playSound('newMessage');
     setChatHistory(prev => [...prev, { sender: 'customer', text: responseText }]);
@@ -483,7 +524,7 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
     setIsCallActive(false);
   };
 
-  // Update the resetGame function to clear daily reports
+  // Update the resetGame function to reset cooldowns
   const resetGame = () => {
     setBankCapital(MAX_BANK_CAPITAL);
     setCapitalHistory([MAX_BANK_CAPITAL]);
@@ -497,6 +538,15 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
     setShowOnboarding(true); 
     setItDispatchCooldown(0);
     setDailyReports([]); // Clear daily reports for new game
+    
+    // Reset geopolitical cooldowns
+    setGeopoliticalCooldowns({
+      critical: 0,
+      warning: 0,
+      success: 0,
+      info: 0
+    });
+    
     // Reset economic state
     setInterestRate(BASE_INTEREST_RATE);
     setEconomicCycle('growth');
@@ -666,45 +716,74 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
   // Geopolitical events based on capital levels
   const checkGeopoliticalEvents = (capital: number) => {
     const capitalInMillions = capital / 1000000;
+    const currentTime = Date.now();
+    
+    // Define cooldown periods (in milliseconds)
+    const COOLDOWN_PERIODS = {
+      critical: 30000,  // 30 seconds for critical alerts
+      warning: 45000,   // 45 seconds for warnings
+      success: 60000,   // 60 seconds for success messages
+      info: 30000       // 30 seconds for info
+    };
     
     // Critical low capital events
     if (capitalInMillions < 50 && capitalInMillions > 0) {
-      const criticalEvents = [
-        "BREAKING: President announces resignation amid economic crisis. 'The banking sector collapse has shaken our nation's foundation,' says outgoing leader.",
-        "EMERGENCY SESSION: Congress convenes to discuss emergency economic measures as banking sector teeters on collapse.",
-        "MARKETS IN TURMOIL: International investors flee as domestic banking institution faces imminent failure.",
-        "FEDERAL INTERVENTION: Treasury Secretary announces potential government bailout discussions.",
-        "CRISIS DEEPENS: Rating agencies downgrade national economic outlook to 'Critical Risk'.",
-      ];
-      
-      const event = criticalEvents[Math.floor(Math.random() * criticalEvents.length)];
-      showAlertDialog(event, 'critical');
+      // Check if critical cooldown has passed
+      if (currentTime - geopoliticalCooldowns.critical > COOLDOWN_PERIODS.critical) {
+        const criticalEvents = [
+          "BREAKING: President announces resignation amid economic crisis. 'The banking sector collapse has shaken our nation's foundation,' says outgoing leader.",
+          "EMERGENCY SESSION: Congress convenes to discuss emergency economic measures as banking sector teeters on collapse.",
+          "MARKETS IN TURMOIL: International investors flee as domestic banking institution faces imminent failure.",
+          "FEDERAL INTERVENTION: Treasury Secretary announces potential government bailout discussions.",
+          "CRISIS DEEPENS: Rating agencies downgrade national economic outlook to 'Critical Risk'.",
+        ];
+        
+        const event = criticalEvents[Math.floor(Math.random() * criticalEvents.length)];
+        showAlertDialog(event, 'critical');
+        
+        // Set cooldown
+        setGeopoliticalCooldowns(prev => ({ ...prev, critical: currentTime }));
+      }
     }
     
-    // Very low capital warnings
-    else if (capitalInMillions < 75) {
-      const warningEvents = [
-        "ECONOMIC CONCERNS: Federal Reserve Chairman expresses 'serious concerns' about banking sector stability.",
-        "MARKET WATCH: Analysts warn of potential systemic banking risks as major institution shows strain.",
-        "GOVERNMENT ALERT: Treasury Department monitoring situation closely, prepared to take action if needed.",
-      ];
-      
-      const event = warningEvents[Math.floor(Math.random() * warningEvents.length)];
-      showAlertDialog(event, 'warning');
+    // Very low capital warnings  
+    else if (capitalInMillions < 75 && capitalInMillions >= 50) {
+      // Check if warning cooldown has passed
+      if (currentTime - geopoliticalCooldowns.warning > COOLDOWN_PERIODS.warning) {
+        const warningEvents = [
+          "ECONOMIC CONCERNS: Federal Reserve Chairman expresses 'serious concerns' about banking sector stability.",
+          "MARKET WATCH: Analysts warn of potential systemic banking risks as major institution shows strain.",
+          "GOVERNMENT ALERT: Treasury Department monitoring situation closely, prepared to take action if needed.",
+        ];
+        
+        const event = warningEvents[Math.floor(Math.random() * warningEvents.length)];
+        showAlertDialog(event, 'warning');
+        
+        // Set cooldown
+        setGeopoliticalCooldowns(prev => ({ ...prev, warning: currentTime }));
+      }
+    }
+      // High capital success events
+    else if (capitalInMillions > 300) {
+      // Check if success cooldown has passed
+      if (currentTime - geopoliticalCooldowns.success > COOLDOWN_PERIODS.success) {
+        const successEvents = [
+          "PRESIDENTIAL PRAISE: 'This is the strongest our banking sector has been in a decade!' declares President at economic summit.",
+          "ECONOMIC BOOM: International media lauds the nation's banking resilience and economic leadership.",
+          "RECORD PERFORMANCE: Treasury Secretary announces record-breaking financial sector performance metrics.",
+          "GLOBAL RECOGNITION: World Bank commends exceptional banking sector management and stability.",
+        ];
+        
+        const event = successEvents[Math.floor(Math.random() * successEvents.length)];
+        showAlertDialog(event, 'success');
+        
+        // Set cooldown
+        setGeopoliticalCooldowns(prev => ({ ...prev, success: currentTime }));
+      }
     }
     
-    // High capital success events
-    else if (capitalInMillions > 180) {
-      const successEvents = [
-        "PRESIDENTIAL PRAISE: 'This is the strongest our banking sector has been in a decade!' declares President at economic summit.",
-        "ECONOMIC BOOM: International media lauds the nation's banking resilience and economic leadership.",
-        "RECORD PERFORMANCE: Treasury Secretary announces record-breaking financial sector performance metrics.",
-        "GLOBAL RECOGNITION: World Bank commends exceptional banking sector management and stability.",
-      ];
-      
-      const event = successEvents[Math.floor(Math.random() * successEvents.length)];
-      showAlertDialog(event, 'success');
-    }
+    // Medium capital range (75-180M) - no alerts, this is the "stable" zone
+    // This prevents constant alerts when capital is in a normal range
   };
 
   // Alert dialog function
@@ -740,10 +819,9 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
       '📋 OPERATIONAL SUMMARY:',
       `• Processed ${stats.correct + stats.incorrect} cases`,
       `• Maintained ${accuracy}% accuracy rate`,
-      stats.incorrect > 0 ? `• ${stats.incorrect} security breaches contained` : '• No security incidents recorded',
-      '',
-      capital > 150000000 ? '✅ SECTOR STATUS: STABLE' : 
-      capital > 100000000 ? '⚠️ SECTOR STATUS: MONITORING' : 
+      stats.incorrect > 0 ? `• ${stats.incorrect} security breaches contained` : '• No security incidents recorded',      '',
+      capital > 300000000 ? '✅ SECTOR STATUS: STABLE' : 
+      capital > 150000000 ? '⚠️ SECTOR STATUS: MONITORING' : 
       capital > 50000000 ? '🚨 SECTOR STATUS: UNSTABLE' : 
       '🔥 SECTOR STATUS: CRITICAL',
     ];
