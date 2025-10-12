@@ -39,13 +39,6 @@ const LoadingSpinner: React.FC = () => (
 
 const CustomerProfile: React.FC<{ name: string, image: string }> = ({ name, image }) => (
     <div className="flex items-center space-x-4 mb-4 p-3 bg-black border-2 border-green-500 rounded-none shadow-[0_0_20px_rgba(34,197,94,0.3)]">
-        <div className="w-24 h-24 bg-black border border-green-600 rounded-none overflow-hidden flex-shrink-0 flex items-center justify-center animate-jump shadow-[0_0_15px_rgba(34,197,94,0.4)]">
-            {image ? (
-                <img src={`data:image/png;base64,${image}`} alt="Customer" className="w-full h-full object-contain filter brightness-110 contrast-125" style={{imageRendering: 'pixelated'}}/>
-            ) : (
-                <div className="w-full h-full flex items-center justify-center text-green-600 text-xs font-mono">NO IMAGE</div>
-            )}
-        </div>
         <div>
             <p className="text-green-600 text-sm font-mono">CLIENT</p>
             <p className="font-bold text-green-300 text-lg font-mono tracking-wide">{name}</p>
