@@ -10,13 +10,22 @@ interface LeftPanelProps {
   onSendMessage: (message: string) => void;
   onStartCall: () => void;
   decisionMade: boolean;
+  phoneVerified: boolean | null; // null = not checked, true/false = result
 }
 
-const CaseDetails: React.FC<{ scenario: Scenario }> = ({ scenario }) => {
+const CaseDetails: React.FC<{ scenario: Scenario; phoneVerified: boolean | null }> = ({ scenario, phoneVerified }) => {
     return (
         <div className="mb-4 p-3 bg-black border-2 border-green-500 rounded-none shadow-[0_0_20px_rgba(34,197,94,0.3)]">
             <h3 className="font-bold text-green-400 mb-2 font-mono text-lg tracking-wide">TRANSACTION DETAILS</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p className="text-green-600 font-mono">Subject</p>
+                    <p className="text-green-300 font-mono">{scenario.customerName}</p>
+                </div>
+                <div>
+                    <p className="text-green-600 font-mono">Phone Number</p>
+                    <p className="text-green-300 font-mono">{scenario.phoneNumber}</p>
+                </div>
                 <div>
                     <p className="text-green-600 font-mono">Transaction Type</p>
                     <p className="text-green-300 font-mono">{scenario.transactionType}</p>
@@ -25,6 +34,14 @@ const CaseDetails: React.FC<{ scenario: Scenario }> = ({ scenario }) => {
                     <p className="text-green-600 font-mono">Details</p>
                     <p className="text-green-300 font-mono">{scenario.details}</p>
                 </div>
+                {phoneVerified !== null && (
+                    <div className="col-span-2">
+                        <p className="text-green-600 font-mono">Phone Verification</p>
+                        <p className={`font-mono font-bold ${phoneVerified ? 'text-green-400' : 'text-red-400'}`}>
+                            {phoneVerified ? '✓ VERIFIED' : '✗ INVALID'}
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -143,15 +160,15 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled, suggeste
 };
 
 
-const LeftPanel: React.FC<LeftPanelProps> = ({ scenario, isLoading, chatHistory, isCustomerTyping, onSendMessage, onStartCall, decisionMade }) => {
+const LeftPanel: React.FC<LeftPanelProps> = ({ scenario, isLoading, chatHistory, isCustomerTyping, onSendMessage, onStartCall, decisionMade, phoneVerified }) => {
   return (
     <div className="bg-black p-6 rounded-none shadow-[0_0_30px_rgba(34,197,94,0.3)] h-full min-h-[700px] flex flex-col border-2 border-green-500">
       <h2 className="text-3xl font-mono text-green-400 border-b-2 border-green-500 pb-2 mb-4 text-center tracking-wider">INCOMING TRANSMISSION</h2>
       {isLoading ? <LoadingSpinner /> : scenario && (
         <div className="flex flex-col flex-grow animate-fade-in h-full">
             <CustomerProfile name={scenario.customerName} image={scenario.customerImage} />
-            <CaseDetails scenario={scenario} />
-            <div className="mb-4">                <button 
+            <CaseDetails scenario={scenario} phoneVerified={phoneVerified} />
+            <div className="mb-4"><button 
                     onClick={() => {
                         playSound('startCall');
                         onStartCall();

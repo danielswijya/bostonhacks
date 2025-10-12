@@ -11,6 +11,10 @@ const scenarioSchema = {
       type: Type.STRING,
       description: "The name of the bank client or scammer making the request. Should be plausible."
     },
+    phoneNumber: {
+      type: Type.STRING,
+      description: "The phone number the customer claims to have. For scams, this might not match the real client's phone number."
+    },
     initialMessage: {
       type: Type.STRING,
       description: "The initial chat message from the person, written in a conversational tone to start the interaction."
@@ -57,7 +61,7 @@ const scenarioSchema = {
         description: "A concise, actionable cybersecurity tip for the player that is directly related to the scam or request type in the scenario. E.g., 'Always verify urgent fund transfer requests via a known, trusted call-back number, not one provided in an email.'"
     }
   },
-  required: ["customerName", "initialMessage", "transactionType", "details", "isScam", "scamRationale", "personality", "voiceGender", "language", "initialMessageEnglish", "suggestedPrompts", "cybersecurityTip"],
+  required: ["customerName", "phoneNumber", "initialMessage", "transactionType", "details", "isScam", "scamRationale", "personality", "voiceGender", "language", "initialMessageEnglish", "suggestedPrompts", "cybersecurityTip"],
 };
 
 const generateImage = async (prompt: string): Promise<string> => {
@@ -94,18 +98,20 @@ export const generateScenario = async (): Promise<Scenario> => {
       ${JSON.stringify(VALID_CLIENTS, null, 2)}
 
       **Federal Compliance Protocols:**
-      ${COMPLIANCE_PROTOCOLS.map(p => `- ${p}`).join('\n')}
-
-      **Scenario Generation Rules:**
+      ${COMPLIANCE_PROTOCOLS.map(p => `- ${p}`).join('\n')}      **Scenario Generation Rules:**
       1.  **Context:** Scenarios should be relevant to banking and finance. Examples: urgent wire transfers, business email compromise, phishing from 'executives', account lockouts, suspicious login alerts.
       2.  **Scam Nuances:** Scam red flags should be subtle. Examples:
           - A slightly misspelled name ("Alice Johnsen").
+          - **Wrong Phone Number:** For scams, provide a phone number that DOESN'T match the real client's number from the database.
           - A request violating a minor compliance protocol.
           - Use of intense emotional manipulation (e.g., "This deal will fall through if the wire isn't sent in the next 10 minutes!").
           - **Voice Mismatch:** Occasionally create a gender mismatch where a scammer poses as a client of a different gender. Set 'voiceGender' to the scammer's true voice.
-      3.  **Educational Tips:** For every scenario, provide a relevant 'cybersecurityTip'. The tip must be practical advice related to the situation.
-      4.  **Languages:** Occasionally (25% of the time), generate the 'initialMessage' in a language other than English (like Spanish or French), and provide the English translation in 'initialMessageEnglish'.
-      5.  **Suggested Prompts:** Generate 3 relevant, short questions an analyst might ask to verify this specific scenario.
+      3.  **Phone Number Logic:** 
+          - For legitimate scenarios: Use the EXACT phone number from the matching client in the database.
+          - For scam scenarios: Use a different phone number that doesn't match any client or use a real client's number but with a different name.
+      4.  **Educational Tips:** For every scenario, provide a relevant 'cybersecurityTip'. The tip must be practical advice related to the situation.
+      5.  **Languages:** Occasionally (25% of the time), generate the 'initialMessage' in a language other than English (like Spanish or French), and provide the English translation in 'initialMessageEnglish'.
+      6.  **Suggested Prompts:** Generate 3 relevant, short questions an analyst might ask to verify this specific scenario.
       
       Generate a new, unique scenario now.
     `;
@@ -128,9 +134,9 @@ export const generateScenario = async (): Promise<Scenario> => {
     return { ...scenarioTextData, customerImage: customerImageB64 };
 
   } catch (error) {
-    console.error("Error generating scenario with Gemini:", error);
-    return {
+    console.error("Error generating scenario with Gemini:", error);    return {
       customerName: "API Error",
+      phoneNumber: "555-0000",
       initialMessage: "There was an issue generating the next case. The system might be down. Please try again. This is a legitimate system message.",
       transactionType: "System Alert",
       details: "Error connecting to the scenario generator.",

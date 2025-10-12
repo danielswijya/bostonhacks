@@ -15,6 +15,8 @@ interface MarketTickerProps {
     interestRate?: number;
     economicCycle?: 'growth' | 'recession' | 'crisis';
     lastEconomicEvent?: string;
+    activeEvent?: string | null;
+    eventTimeRemaining?: number;
     onAdjustInterestRate?: (change: number) => void;
 }
 
@@ -77,27 +79,142 @@ const StockGraph: React.FC<{ history: number[], theme: Theme }> = ({ history, th
 
 const MarketTicker: React.FC<MarketTickerProps> = ({ 
     capital, maxCapital, history, toggleTheme, theme, isLeaking, day, casesToday, casesPerDay,
-    interestRate = 5.0, economicCycle = 'growth', lastEconomicEvent = '', onAdjustInterestRate 
+    interestRate = 5.0, economicCycle = 'growth', lastEconomicEvent = '', 
+    activeEvent = null, eventTimeRemaining = 0, onAdjustInterestRate 
 }) => {
-    const [tickerData, setTickerData] = useState(() => generateTickerData(20));
-
+    const [tickerData, setTickerData] = useState(() => generateTickerData(20));    
     useEffect(() => {
         const interval = setInterval(() => {
             setTickerData(prevData =>
                 prevData.map(item => {
                     const price = parseFloat(item.price);
-                    const changeDirection = Math.random() > 0.5 ? 1 : -1;
-                    const newPrice = price + changeDirection * (Math.random() * 0.5);
+                    
+                    // Economic factors affecting stock prices
+                    let baseVolatility = 0.8; // Base volatility
+                    
+                    // SPECIAL CASE: Interest rate between 4% and 5% (uncertainty zone)
+                    if (interestRate >= 4.0 && interestRate <= 5.0) {
+                        // Asymmetric range: -1.50 to +0.50 (bearish bias)
+                        const uncertaintyEffect = (Math.random() * 2.0) - 1.5; // Range: -1.5 to +0.5
+                        baseVolatility = 1.2; // Higher volatility in uncertainty zone
+                        
+                        const priceChange = uncertaintyEffect * (Math.random() * baseVolatility);
+                        const newPrice = Math.max(0.01, price + priceChange);
+                        
+                        return {
+                            ...item,
+                            price: newPrice.toFixed(2),
+                            change: (parseFloat(item.change) + priceChange).toFixed(2),
+                        };
+                    }
+                    
+                    // NORMAL CASE: Interest rate outside 4-5% range
+                    // IMMEDIATE Interest rate effect on stocks (inverse relationship)
+                    // Higher rates = stocks become less attractive vs bonds (IMMEDIATE DROP)
+                    // Lower rates = stocks become more attractive (IMMEDIATE RISE)
+                    // Fix the rate effect logic to cover all cases properly
+                    const rateEffect = interestRate >= 7 ? -0.6 :    // High rates: strong negative (>= not >)
+                                      interestRate > 5 ? -0.2 :      // Above uncertainty zone: mild negative  
+                                      interestRate <= 2 ? 0.7 :      // Very low rates: strong positive (<= not <)
+                                      interestRate < 4 ? 0.3 : 0;    // Below uncertainty zone: mild positive
+                    
+                    // Economic cycle effect
+                    const cycleEffect = economicCycle === 'growth' ? 0.4 :
+                                       economicCycle === 'recession' ? -0.5 :
+                                       economicCycle === 'crisis' ? -0.8 : 0;
+                    
+                    // Active event effect (stronger impact)
+                    const eventEffect = activeEvent ? 
+                        (activeEvent.includes('Rally') || activeEvent.includes('Boom') ? 0.8 :
+                         activeEvent.includes('Crisis') || activeEvent.includes('War') ? -0.9 : 
+                         activeEvent.includes('Inflation') ? -0.4 : 0) : 0;
+                    
+                    // Combine all effects with stronger influence
+                    const totalEffect = rateEffect + cycleEffect + eventEffect;
+                    
+                    // Calculate price change with immediate reaction
+                    const changeDirection = Math.random() - 0.5 + (totalEffect * 0.8); // 80% of effect applied immediately
+                    const volatility = baseVolatility * (1 + Math.abs(totalEffect * 1.5)); // More volatility during extreme conditions
+                    
+                    const priceChange = changeDirection * (Math.random() * volatility);
+                    const newPrice = Math.max(0.01, price + priceChange); // Minimum price of $0.01
+                    
                     return {
                         ...item,
                         price: newPrice.toFixed(2),
-                        change: (parseFloat(item.change) + (newPrice - price)).toFixed(2),
+                        change: (parseFloat(item.change) + priceChange).toFixed(2),
                     };
                 })
             );
-        }, 2000);
+        }, 1000); // Updates every second for immediate reaction
+        
         return () => clearInterval(interval);
-    }, []);    const capitalPercentage = (capital / maxCapital) * 100;
+    }, [interestRate, economicCycle, activeEvent]);    
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTickerData(prevData =>
+                prevData.map(item => {
+                    const price = parseFloat(item.price);
+                    
+                    // Economic factors affecting stock prices
+                    let baseVolatility = 0.8;
+                    
+                    // SPECIAL CASE: Interest rate between 4% and 5% (uncertainty zone)
+                    if (interestRate >= 4.0 && interestRate <= 5.0) {
+                        // Asymmetric range: -1.50 to +0.50 (bearish bias)
+                        const uncertaintyEffect = (Math.random() * 2.0) - 1.5; // Range: -1.5 to +0.5
+                        baseVolatility = 1.2; // Higher volatility in uncertainty zone
+                        
+                        const priceChange = uncertaintyEffect * (Math.random() * baseVolatility);
+                        const newPrice = Math.max(0.01, price + priceChange);
+                        
+                        return {
+                            ...item,
+                            price: newPrice.toFixed(2),
+                            change: (parseFloat(item.change) + priceChange).toFixed(2),
+                        };
+                    }
+                    
+                    // NORMAL CASE: IMMEDIATE Interest rate effect on stocks
+                    // Markets react instantly to rate changes (unlike bank capital which is gradual)
+                    const rateEffect = interestRate >= 7 ? -0.8 :    // Very high rates: strong immediate negative
+                                      interestRate > 5 ? -0.3 :     // Above uncertainty: immediate mild negative  
+                                      interestRate <= 2 ? 0.9 :     // Very low rates: strong immediate positive
+                                      interestRate < 4 ? 0.4 : 0;   // Below uncertainty: immediate mild positive
+                    
+                    // Economic cycle effect (also immediate for markets)
+                    const cycleEffect = economicCycle === 'growth' ? 0.5 :
+                                       economicCycle === 'recession' ? -0.6 :
+                                       economicCycle === 'crisis' ? -0.9 : 0;
+                    
+                    // Active event effect (immediate market reaction)
+                    const eventEffect = activeEvent ? 
+                        (activeEvent.includes('Rally') || activeEvent.includes('Boom') ? 1.0 :
+                         activeEvent.includes('Crisis') || activeEvent.includes('War') ? -1.1 : 
+                         activeEvent.includes('Inflation') ? -0.5 : 0) : 0;
+                    
+                    // Combine all effects - IMMEDIATE full impact for ticker
+                    const totalEffect = rateEffect + cycleEffect + eventEffect;
+                    
+                    // Calculate IMMEDIATE price change (full effect applied instantly)
+                    const changeDirection = Math.random() - 0.5 + (totalEffect * 1.0); // 100% immediate effect
+                    const volatility = baseVolatility * (1 + Math.abs(totalEffect * 2.0)); // Higher volatility for immediate reactions
+                    
+                    const priceChange = changeDirection * (Math.random() * volatility);
+                    const newPrice = Math.max(0.01, price + priceChange);
+                    
+                    return {
+                        ...item,
+                        price: newPrice.toFixed(2),
+                        change: (parseFloat(item.change) + priceChange).toFixed(2),
+                    };
+                })
+            );
+        }, 500); // Faster updates (every 0.5 seconds) for immediate market reactions
+        
+        return () => clearInterval(interval);
+    }, [interestRate, economicCycle, activeEvent]); // Immediate dependency on rate changes
+    const capitalPercentage = (capital / maxCapital) * 100;
     const formatCurrency = (value: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
     };
@@ -161,13 +278,19 @@ const MarketTicker: React.FC<MarketTickerProps> = ({
                     STATE CAPITAL
                 </p>                <p className={`text-6xl font-bold font-mono ${isLeaking ? 'text-red-400 animate-pulse shadow-red-500/50' : 'text-green-400 shadow-green-500/50'} drop-shadow-lg`}>
                     {formatCurrency(capital)}
-                </p>
-                {/* Economic Event Display */}
-                {lastEconomicEvent && (
+                </p>                {/* Economic Event Display */}
+                {activeEvent && eventTimeRemaining > 0 ? (
+                    <div className="mt-2 p-2 bg-red-900/30 border border-red-500 rounded-none animate-pulse">
+                        <p className="text-red-300 text-sm font-mono font-bold uppercase">🚨 ACTIVE EVENT: {activeEvent}</p>
+                        <p className="text-yellow-300 text-xs font-mono mt-1">
+                            TIME REMAINING: {Math.floor(eventTimeRemaining / 60)}:{(eventTimeRemaining % 60).toString().padStart(2, '0')}
+                        </p>
+                    </div>
+                ) : lastEconomicEvent ? (
                     <div className="mt-2 p-2 bg-black/50 border border-green-600 rounded-none">
                         <p className="text-green-300 text-xs font-mono">{lastEconomicEvent}</p>
                     </div>
-                )}
+                ) : null}
             </div>
 
             <div className="w-full bg-black border-2 border-green-500 text-green-400 overflow-hidden whitespace-nowrap text-sm font-mono shadow-inner">

@@ -99,24 +99,27 @@ const ComplianceProtocols: React.FC = () => (
     </div>
 );
 
-const ActionButtons: React.FC<{onDecision: (approved: boolean) => void; disabled: boolean; isLeaking: boolean; isLoading: boolean}> = ({onDecision, disabled, isLeaking, isLoading}) => (    <div id="decision-buttons-onboarding" className="grid grid-cols-2 gap-4">
-        {isLeaking && (            <div className="col-span-2 mb-2 p-2 bg-red-900/30 border border-red-500 rounded-none text-center shadow-[0_0_15px_rgba(239,68,68,0.5)]">
-                <p className="text-red-400 text-sm font-bold font-mono animate-pulse">
-                    🚨 SECURITY BREACH DETECTED - Deploy Emergency Response to contain hemorrhaging
-                </p>
+// Find the ActionButtons component and update the disabled logic
+
+const ActionButtons: React.FC<{onDecision: (approved: boolean) => void; disabled: boolean; isLeaking: boolean; isLoading: boolean}> = ({onDecision, disabled, isLeaking, isLoading}) => (
+    <div id="decision-buttons-onboarding" className="grid grid-cols-2 gap-4">
+        {isLeaking && (
+            <div className="col-span-2 mb-2 p-2 bg-red-900/30 border border-red-500 rounded-none animate-pulse">
+                <p className="text-red-300 text-xs font-mono text-center font-bold">⚠️ SECURITY BREACH DETECTED - IMMEDIATE CONTAINMENT REQUIRED</p>
             </div>
         )}
-        {isLoading && (            <div className="col-span-2 mb-2 p-2 bg-yellow-900/30 border border-yellow-500 rounded-none text-center shadow-[0_0_15px_rgba(234,179,8,0.5)]">
-                <p className="text-yellow-400 text-sm font-bold font-mono">
-                    Processing next transmission...
-                </p>
+        {isLoading && (
+            <div className="col-span-2 mb-2 p-2 bg-yellow-900/30 border border-yellow-500 rounded-none">
+                <p className="text-yellow-300 text-xs font-mono text-center">PROCESSING DECISION...</p>
             </div>
-        )}        <button 
+        )}
+        
+        <button 
             onClick={() => {
                 playSound('approve');
                 onDecision(true);
             }} 
-            disabled={disabled}
+            disabled={false} // Always enable the buttons - players should be able to make decisions
             className="bg-green-700 hover:bg-green-600 text-green-100 font-bold py-4 px-4 rounded-none transition-all duration-300 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed text-2xl font-mono border-2 border-green-500 shadow-[0_0_20px_rgba(34,197,94,0.5)] hover:shadow-[0_0_30px_rgba(34,197,94,0.8)] tracking-wider"
         >
             AUTHORIZE
@@ -126,7 +129,7 @@ const ActionButtons: React.FC<{onDecision: (approved: boolean) => void; disabled
                 playSound('deny');
                 onDecision(false);
             }} 
-            disabled={disabled}
+            disabled={false} // Always enable the buttons - players should be able to make decisions
             className="bg-red-700 hover:bg-red-600 text-red-100 font-bold py-4 px-4 rounded-none transition-all duration-300 disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed text-2xl font-mono border-2 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)] hover:shadow-[0_0_30px_rgba(239,68,68,0.8)] tracking-wider"
         >
             DENY ACCESS

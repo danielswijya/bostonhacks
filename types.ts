@@ -1,5 +1,6 @@
 export interface Scenario {
   customerName: string;
+  phoneNumber: string; // The phone number the customer claims to have
   initialMessage: string;
   transactionType: string;
   details: string;
