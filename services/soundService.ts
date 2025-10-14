@@ -22,7 +22,7 @@ let backgroundMusic: HTMLAudioElement | null = null;
 export const initBackgroundMusic = async () => {
   try {
     if (!backgroundMusic) {
-      backgroundMusic = new Audio('/src/videos/lone-wolf-10374.mp3');
+      backgroundMusic = new Audio('../public/audio/lone-wolf-10374.mp3');
       backgroundMusic.loop = true;
       backgroundMusic.volume = 0.3; // Lower volume for background
     }
