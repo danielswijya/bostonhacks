@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Scenario, ChatMessage, ResolvedCase, ClientData } from '../types';
 import { generateScenario, generateChatResponse } from '../services/gameService';
-import { playSound } from '../services/soundService';
+import { playSound, playBackgroundMusic, pauseBackgroundMusic, resumeBackgroundMusic } from '../services/soundService';
 import { FULL_CLIENT_ROSTER } from '../constants';
 import LeftPanel from './LeftPanel';
 import RightPanel from './RightPanel';
@@ -11,6 +11,7 @@ import EndOfDayModal from './EndOfDayModal';
 import MarketTicker from './MarketTicker';
 import AlertDialog from './AlertDialog';
 import NewsletterDialog from './NewsletterDialog';
+import InterestRateDialog from './InterestRateDialog';
 
 interface DayStats {
   correct: number;
@@ -30,7 +31,7 @@ const MIN_INTEREST_RATE = 2.0;  // ✓ Correct
 const MAX_INTEREST_RATE = 7.0;  // ✓ Correct
 const ECONOMIC_CYCLE_INTERVAL = 5000; // 5 seconds (faster cycles for more volatility)
 const RANDOM_EVENT_INTERVAL = 120000; // 2 minutes between events
-const EVENT_DURATION = 90000; // 1.5 minutes duration
+const EVENT_DURATION = 30000; // 30 seconds duration
 
 // Phone verification utility
 const verifyPhoneNumber = (customerName: string, phoneNumber: string): boolean => {
@@ -48,8 +49,10 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
   const [capitalHistory, setCapitalHistory] = useState<number[]>([MAX_BANK_CAPITAL]);
   const [isLeaking, setIsLeaking] = useState<boolean>(false);
   const leakIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    // Economic system state
+  // Economic system state
   const [interestRate, setInterestRate] = useState<number>(BASE_INTEREST_RATE);
+  const [isInterestRateLocked, setIsInterestRateLocked] = useState<boolean>(false);
+  const [showInterestRateDialog, setShowInterestRateDialog] = useState<boolean>(false);
   const [economicCycle, setEconomicCycle] = useState<'growth' | 'recession' | 'crisis'>('growth');
   const [lastEconomicEvent, setLastEconomicEvent] = useState<string>('');
   const [activeEvent, setActiveEvent] = useState<string | null>(null);
@@ -319,13 +322,25 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
       if (eventIntervalRef.current) clearInterval(eventIntervalRef.current);
       if (eventTimerRef.current) clearInterval(eventTimerRef.current);
     };
-  }, [interestRate, economicCycle, economicsUpdatesPaused, geopoliticalCooldowns, showOnboarding]);
-  // Interest rate adjustment functions
+  }, [interestRate, economicCycle, economicsUpdatesPaused, geopoliticalCooldowns, showOnboarding]);  // Interest rate adjustment functions
   const adjustInterestRate = (change: number) => {
-    setInterestRate(prev => {
-      const newRate = Math.max(MIN_INTEREST_RATE, Math.min(MAX_INTEREST_RATE, prev + change));
-      return newRate;
-    });
+    if (!isInterestRateLocked) {
+      setInterestRate(prev => {
+        const newRate = Math.max(MIN_INTEREST_RATE, Math.min(MAX_INTEREST_RATE, prev + change));
+        return newRate;
+      });
+    }
+  };
+
+  const handleSetInterestRate = (rate: number) => {
+    setInterestRate(rate);
+    setIsInterestRateLocked(true);
+    setShowInterestRateDialog(false);
+    
+    // Start background music after setting interest rate (after onboarding)
+    if (!showOnboarding) {
+      playBackgroundMusic();
+    }
   };
 
   // Add a separate effect that triggers immediate market reaction to interest rate changes
@@ -411,7 +426,6 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
       fetchNextScenario();
     }
   }, [casesToday, fetchNextScenario]);
-
   // Update the handleStartNextDay function to save daily reports
   const handleStartNextDay = () => {
     // Save the current day's report before moving to next day
@@ -443,14 +457,22 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
     setResolvedCases([]);
     setShowEndOfDay(false);
     setEconomicsUpdatesPaused(false); // Resume money changes
+    
+    // Reset interest rate lock for new day
+    setIsInterestRateLocked(false);
+    setShowInterestRateDialog(true); // Show interest rate dialog for new day
+    
     fetchNextScenario();
   };
-
   useEffect(() => {
-    if (!showOnboarding) {
-        fetchNextScenario();
+    if (!showOnboarding && !isInterestRateLocked) {
+      setShowInterestRateDialog(true);
+    } else if (!showOnboarding && isInterestRateLocked) {
+      fetchNextScenario();
+      // Start background music after onboarding is complete and rate is set
+      playBackgroundMusic();
     }
-  }, [showOnboarding, fetchNextScenario]);
+  }, [showOnboarding, isInterestRateLocked, fetchNextScenario]);
   const handleSendMessage = async (message: string) => {
     if (!message.trim() || !currentScenario) return;
 
@@ -514,6 +536,10 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
       playSound('approve');
     }
   };
+  const handleStartCall = () => {
+    setIsCallActive(true);
+    pauseBackgroundMusic(); // Pause background music during calls
+  };
 
   const handlePhoneCallComplete = () => {
     if (currentScenario) {
@@ -522,8 +548,8 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
       playSound(isValid ? 'approve' : 'deny');
     }
     setIsCallActive(false);
+    resumeBackgroundMusic(); // Resume background music after calls
   };
-
   // Update the resetGame function to reset cooldowns
   const resetGame = () => {
     setBankCapital(MAX_BANK_CAPITAL);
@@ -549,6 +575,8 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
     
     // Reset economic state
     setInterestRate(BASE_INTEREST_RATE);
+    setIsInterestRateLocked(false);
+    setShowInterestRateDialog(false);
     setEconomicCycle('growth');
     setLastEconomicEvent('');
     setActiveEvent(null);
@@ -828,9 +856,19 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
     
     return headlines.join('\n');
   };
-
   if (showOnboarding) {
     return <OnboardingModal onClose={() => setShowOnboarding(false)} />;
+  }
+
+  if (showInterestRateDialog) {
+    return (
+      <InterestRateDialog
+        onSetRate={handleSetInterestRate}
+        minRate={MIN_INTEREST_RATE}
+        maxRate={MAX_INTEREST_RATE}
+        currentRate={interestRate}
+      />
+    );
   }
   // Update the game over condition to show the comprehensive report
   if (bankCapital <= 0) {
@@ -857,8 +895,7 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
   if (showEndOfDay) {
     return <EndOfDayModal day={currentDay} stats={dayStats} onNextDay={handleStartNextDay} resolvedCases={resolvedCases} />;
   }  return (
-    <>
-      <MarketTicker 
+    <>      <MarketTicker 
         capital={bankCapital}
         maxCapital={MAX_BANK_CAPITAL}
         history={capitalHistory} 
@@ -873,18 +910,17 @@ const GameScreen: React.FC<{ toggleTheme: () => void; theme: 'light' | 'dark' }>
         lastEconomicEvent={lastEconomicEvent}
         activeEvent={activeEvent}
         eventTimeRemaining={eventTimeRemaining}
-        onAdjustInterestRate={adjustInterestRate}
+        onAdjustInterestRate={isInterestRateLocked ? undefined : adjustInterestRate}
       />
       
       <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 transition-shadow duration-500 rounded-none ${isLeaking ? 'shadow-[0_0_50px_rgba(239,68,68,0.8)]' : ''}`}>
-        <div id="left-panel-onboarding" className="lg:col-span-1">
-          <LeftPanel 
+        <div id="left-panel-onboarding" className="lg:col-span-1">          <LeftPanel 
             scenario={currentScenario} 
             isLoading={isLoading}
             chatHistory={chatHistory}
             isCustomerTyping={isCustomerTyping}
             onSendMessage={handleSendMessage}
-            onStartCall={() => setIsCallActive(true)}
+            onStartCall={handleStartCall}
             decisionMade={isLoading}
             phoneVerified={phoneVerified}
           />

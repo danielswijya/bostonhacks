@@ -46,7 +46,8 @@ const generateTickerData = (count: number) => {
         id: i,
         symbol: symbols[i % symbols.length],
         price: (Math.random() * 500 + 50).toFixed(2),
-        change: (Math.random() * 10 - 5).toFixed(2),
+        change: "0.00", // Start with zero change - will be calculated per tick
+        previousPrice: (Math.random() * 500 + 50), // Track previous price for change calculation
     }));
 };
 
@@ -83,12 +84,12 @@ const MarketTicker: React.FC<MarketTickerProps> = ({
     interestRate = 5.0, economicCycle = 'growth', lastEconomicEvent = '', 
     activeEvent = null, eventTimeRemaining = 0, onAdjustInterestRate 
 }) => {
-    const [tickerData, setTickerData] = useState(() => generateTickerData(20));    
-    useEffect(() => {
+    const [tickerData, setTickerData] = useState(() => generateTickerData(20));      useEffect(() => {
         const interval = setInterval(() => {
             setTickerData(prevData =>
                 prevData.map(item => {
-                    const price = parseFloat(item.price);
+                    const currentPrice = parseFloat(item.price);
+                    const previousPrice = item.previousPrice || currentPrice;
                     
                     // Economic factors affecting stock prices
                     let baseVolatility = 0.8; // Base volatility
@@ -100,12 +101,13 @@ const MarketTicker: React.FC<MarketTickerProps> = ({
                         baseVolatility = 1.2; // Higher volatility in uncertainty zone
                         
                         const priceChange = uncertaintyEffect * (Math.random() * baseVolatility);
-                        const newPrice = Math.max(0.01, price + priceChange);
+                        const newPrice = Math.max(0.01, currentPrice + priceChange);
                         
                         return {
                             ...item,
                             price: newPrice.toFixed(2),
-                            change: (parseFloat(item.change) + priceChange).toFixed(2),
+                            change: (newPrice - previousPrice).toFixed(2), // Change from previous tick
+                            previousPrice: currentPrice, // Store current as previous for next tick
                         };
                     }
                     
@@ -138,12 +140,13 @@ const MarketTicker: React.FC<MarketTickerProps> = ({
                     const volatility = baseVolatility * (1 + Math.abs(totalEffect * 1.5)); // More volatility during extreme conditions
                     
                     const priceChange = changeDirection * (Math.random() * volatility);
-                    const newPrice = Math.max(0.01, price + priceChange); // Minimum price of $0.01
+                    const newPrice = Math.max(0.01, currentPrice + priceChange); // Minimum price of $0.01
                     
                     return {
                         ...item,
                         price: newPrice.toFixed(2),
-                        change: (parseFloat(item.change) + priceChange).toFixed(2),
+                        change: (newPrice - previousPrice).toFixed(2), // Change from previous tick only
+                        previousPrice: currentPrice, // Store current as previous for next tick
                     };
                 })
             );
@@ -263,9 +266,8 @@ const MarketTicker: React.FC<MarketTickerProps> = ({
                             <p className="font-bold text-green-400 font-mono text-lg">{interestRate.toFixed(1)}%</p>
                         </div>
                     </div>
-                    
-                    {/* Interest Rate Controls */}
-                    {onAdjustInterestRate && (
+                      {/* Interest Rate Controls */}
+                    {onAdjustInterestRate ? (
                         <div className="flex items-center space-x-2">
                             <button 
                                 onClick={() => onAdjustInterestRate(-0.25)}
@@ -281,6 +283,10 @@ const MarketTicker: React.FC<MarketTickerProps> = ({
                             >
                                 RATE +
                             </button>
+                        </div>
+                    ) : (
+                        <div className="px-3 py-1 bg-gray-700 text-gray-400 font-mono text-xs border border-gray-500 rounded-none">
+                            RATE LOCKED
                         </div>
                     )}
                     
