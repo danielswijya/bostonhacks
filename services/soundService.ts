@@ -13,6 +13,72 @@ const sounds: { [key: string]: string } = {
 
 export type SoundType = keyof typeof sounds;
 
+// Background music audio element
+let backgroundMusic: HTMLAudioElement | null = null;
+
+/**
+ * Initialize background music
+ */
+export const initBackgroundMusic = async () => {
+  try {
+    if (!backgroundMusic) {
+      backgroundMusic = new Audio('/src/videos/lone-wolf-10374.mp3');
+      backgroundMusic.loop = true;
+      backgroundMusic.volume = 0.3; // Lower volume for background
+    }
+  } catch (error) {
+    console.error('Could not initialize background music:', error);
+  }
+};
+
+/**
+ * Play background music
+ */
+export const playBackgroundMusic = async () => {
+  try {
+    if (!backgroundMusic) {
+      await initBackgroundMusic();
+    }
+    if (backgroundMusic) {
+      await backgroundMusic.play();
+    }
+  } catch (error) {
+    console.warn('Background music playback failed:', error);
+  }
+};
+
+/**
+ * Pause background music
+ */
+export const pauseBackgroundMusic = () => {
+  if (backgroundMusic) {
+    backgroundMusic.pause();
+  }
+};
+
+/**
+ * Resume background music
+ */
+export const resumeBackgroundMusic = async () => {
+  try {
+    if (backgroundMusic && backgroundMusic.paused) {
+      await backgroundMusic.play();
+    }
+  } catch (error) {
+    console.warn('Background music resume failed:', error);
+  }
+};
+
+/**
+ * Stop background music
+ */
+export const stopBackgroundMusic = () => {
+  if (backgroundMusic) {
+    backgroundMusic.pause();
+    backgroundMusic.currentTime = 0;
+  }
+};
+
 /**
  * Plays a predefined sound effect.
  * @param sound - The name of the sound to play.
