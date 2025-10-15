@@ -1,3 +1,6 @@
+// Import the background music file as URL for Vite
+import backgroundMusicUrl from '../src/videos/lone-wolf-10374.mp3?url';
+
 // A map to store Audio objects to avoid re-creating them.
 const audioCache: { [key: string]: HTMLAudioElement } = {};
 
@@ -22,7 +25,7 @@ let backgroundMusic: HTMLAudioElement | null = null;
 export const initBackgroundMusic = async () => {
   try {
     if (!backgroundMusic) {
-      backgroundMusic = new Audio('../public/audio/lone-wolf-10374.mp3');
+      backgroundMusic = new Audio(backgroundMusicUrl);
       backgroundMusic.loop = true;
       backgroundMusic.volume = 0.3; // Lower volume for background
     }
